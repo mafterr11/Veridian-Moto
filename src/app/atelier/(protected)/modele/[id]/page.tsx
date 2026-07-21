@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
@@ -10,6 +9,7 @@ import {
   updateModelAction,
 } from "@/app/atelier/(protected)/catalogue-actions";
 import { AdminActionForm } from "@/components/admin/action-form";
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import { ModelConfigurationEditor } from "@/components/admin/model-configuration-editor";
 import { ModelFeatureEditor } from "@/components/admin/model-feature-editor";
 import { ModelForm } from "@/components/admin/model-form";
@@ -46,20 +46,20 @@ async function ModelEditor({ params }: { params: Params }) {
         description="Orice modificare editorială readuce modelul în draft. Publicarea rulează validarea completă într-o tranzacție."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link
+            <AdminDocumentLink
               href="/atelier/modele"
               className={buttonVariants({ variant: "outline" })}
             >
               <ArrowLeft aria-hidden="true" /> Modele
-            </Link>
+            </AdminDocumentLink>
             {model.status === "published" && (
-              <Link
+              <AdminDocumentLink
                 href={`/modele/${model.slug}`}
                 target="_blank"
                 className={buttonVariants({ variant: "outline" })}
               >
                 Preview <ExternalLink aria-hidden="true" />
-              </Link>
+              </AdminDocumentLink>
             )}
           </div>
         }

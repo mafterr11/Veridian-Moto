@@ -10,7 +10,7 @@ const httpUrl = z
   .url()
   .refine((value) => {
     const protocol = new URL(value).protocol;
-    return protocol === "http:" || protocol === "https:"; 
+    return protocol === "http:" || protocol === "https:";
   }, "Only HTTP or HTTPS URLs are allowed.");
 
 const optionalUrl = z.preprocess(

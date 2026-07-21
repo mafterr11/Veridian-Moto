@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 import { getSupabasePublicConfig } from "@/lib/supabase/public-config";
+import { fetchSupabaseWithTimeout } from "@/lib/supabase/fetch-with-timeout";
 
 export class SupabaseNotConfiguredError extends Error {
   constructor() {
@@ -22,6 +23,7 @@ export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
   return createServerClient(config.url, config.publishableKey, {
+    global: { fetch: fetchSupabaseWithTimeout },
     cookies: {
       getAll() {
         return cookieStore.getAll();

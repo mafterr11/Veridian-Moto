@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bike,
@@ -13,6 +12,7 @@ import {
   Settings,
 } from "lucide-react";
 
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -42,10 +42,9 @@ export function AdminNav({ compact = false }: { compact?: boolean }) {
             ? pathname === href
             : pathname === href || pathname.startsWith(`${href}/`);
         return (
-          <Link
+          <AdminDocumentLink
             key={href}
             href={href}
-            prefetch={false}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex h-10 items-center gap-3 px-3 text-sm font-bold transition-colors",
@@ -58,7 +57,7 @@ export function AdminNav({ compact = false }: { compact?: boolean }) {
           >
             <Icon className="size-4" aria-hidden="true" />
             {label}
-          </Link>
+          </AdminDocumentLink>
         );
       })}
     </nav>

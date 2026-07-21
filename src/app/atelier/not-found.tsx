@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -22,12 +22,12 @@ export default function AtelierNotFound() {
           Este posibil să fi fost arhivată sau ca identificatorul să fie
           incorect. Nicio modificare nu a fost aplicată.
         </p>
-        <Link
+        <AdminDocumentLink
           href="/atelier"
           className={buttonVariants({ size: "lg", className: "mt-8" })}
         >
           Înapoi la panou
-        </Link>
+        </AdminDocumentLink>
       </div>
     </main>
   );

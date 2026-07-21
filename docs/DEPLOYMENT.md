@@ -28,10 +28,17 @@ The GitHub Actions quality workflow runs the same static/unit/build gate, the
 production dependency audit, and the database-free Playwright suite on `main` and
 pull requests.
 
-The repository-side Phase 10 verification completed on 21 July 2026 with 70 Vitest
-tests across 24 files, a successful 53-route production build, 14 passing public
+The repository-side verification completed on 21 July 2026 with 72 Vitest tests
+across 26 files, a successful 53-route production build, 14 passing public
 Playwright checks, one intentionally skipped database-dependent journey, a passing
 local deployment smoke test, and no known production dependency vulnerabilities.
+
+The production script deliberately runs `next build --webpack`. The private
+Atelier also uses normal document navigation for its internal links. Together,
+these choices avoid duplicate speculative RSC requests observed with Next.js 16
+prefetching and keep one sidebar click equal to one protected document request.
+Do not replace the Atelier anchors with `next/link` or remove `--webpack` without
+re-running authenticated navigation tests against Vercel.
 
 ## Environment ownership
 
@@ -112,6 +119,12 @@ a migration without overwriting administrator-authored site settings.
 Do not run database migrations from the Vercel build command. A failed application
 deployment must not leave schema changes half-coordinated with an old release.
 
+The PostgreSQL client is intentionally limited to one connection per warm
+serverless function instance. Connections close after a short idle period, and
+connect/query/lock timeouts prevent a failed Supabase dependency from leaving an
+Atelier Suspense boundary loading indefinitely. Raising the per-instance pool size
+multiplies the total connection demand across concurrent Vercel instances.
+
 ## Release order
 
 For each schema-changing release:
@@ -170,6 +183,18 @@ Manual checks still required:
   genuine data-loss event; otherwise add a corrective migration.
 - Rotate a leaked secret in the provider first, update the affected Vercel variable,
   and redeploy. Environment changes do not modify already-created deployments.
+
+If an Atelier page ever remains on `Se încarcă…`, verify all of the following on
+the exact production deployment:
+
+1. the build log identifies `Next.js ... (webpack)`;
+2. the deployment contains the current lockfile and `package.json` rather than an
+   older cached commit;
+3. one sidebar click produces one document request, not a burst of RSC/prefetch
+   requests;
+4. `DATABASE_URL` is the Supabase transaction-pooler URL on port 6543;
+5. Supabase database logs show neither exhausted connections nor a statement
+   running beyond the configured 15-second timeout.
 
 ## Handoff acceptance
 

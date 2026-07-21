@@ -4,7 +4,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import {
   isAllowedAdminEmail,
   readAdminClaims,
+  type AdminClaims,
 } from "@/domain/auth/admin-identity";
+import { fetchSupabaseWithTimeout } from "@/lib/supabase/fetch-with-timeout";
 import { getSupabasePublicConfig } from "@/lib/supabase/public-config";
 
 function redirectWithCookies(url: URL, source: NextResponse) {
@@ -60,6 +62,7 @@ export async function updateSupabaseSession(request: NextRequest) {
   }
 
   const supabase = createServerClient(config.url, config.publishableKey, {
+    global: { fetch: fetchSupabaseWithTimeout },
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -77,8 +80,14 @@ export async function updateSupabaseSession(request: NextRequest) {
       },
     },
   });
-  const { data, error } = await supabase.auth.getClaims();
-  const claims = error ? null : readAdminClaims(data?.claims);
+  let claims: AdminClaims | null = null;
+
+  try {
+    const { data, error } = await supabase.auth.getClaims();
+    claims = error ? null : readAdminClaims(data?.claims);
+  } catch (error) {
+    console.error("Atelier proxy could not verify Supabase claims.", error);
+  }
   const isAllowed = Boolean(
     claims && isAllowedAdminEmail(claims.email, adminEmail),
   );

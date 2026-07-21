@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { Mail, MessageSquareText, Phone } from "lucide-react";
 
 import { updateInquiryAction } from "@/app/atelier/(protected)/solicitari/actions";
 import { AdminActionForm } from "@/components/admin/action-form";
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import { AdminField } from "@/components/admin/form-field";
 import { AdminPageHeader, AdminSection } from "@/components/admin/page-header";
 import {
@@ -181,13 +181,13 @@ async function InquiryWorkspace({
                             {formatMinorPrice(row.totalPriceMinor ?? 0)}
                           </span>
                         </div>
-                        <Link
+                        <AdminDocumentLink
                           href={`/configuratie/${row.configurationReference}`}
                           target="_blank"
                           className="text-veridian mt-4 inline-flex text-sm font-bold"
                         >
                           Deschide rezumatul public
-                        </Link>
+                        </AdminDocumentLink>
                       </div>
                     )}
                   </div>

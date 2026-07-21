@@ -64,7 +64,16 @@ export const getAdminAuthState = cache(async (): Promise<AdminAuthState> => {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getClaims();
+  let claimsResult: Awaited<ReturnType<typeof supabase.auth.getClaims>>;
+
+  try {
+    claimsResult = await supabase.auth.getClaims();
+  } catch (cause) {
+    console.error("Atelier could not verify the Supabase session.", cause);
+    return { status: "unauthenticated" };
+  }
+
+  const { data, error } = claimsResult;
 
   if (error || !data?.claims) {
     return { status: "unauthenticated" };

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowLeft, Database, ShieldCheck } from "lucide-react";
 
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import { LoginForm } from "@/components/admin/login-form";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { isAdminInfrastructureConfigured } from "@/data/auth/admin-session";
@@ -74,13 +74,13 @@ async function LoginPageContent({
           <div className="lg:hidden">
             <BrandMark inverse />
           </div>
-          <Link
+          <AdminDocumentLink
             href="/"
             className="text-steel hover:text-veridian-dark mt-10 inline-flex items-center gap-2 text-xs font-bold tracking-[0.1em] uppercase lg:mt-0"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Înapoi la site
-          </Link>
+          </AdminDocumentLink>
 
           <p className="text-veridian-dark mt-12 text-xs font-bold tracking-[0.18em] uppercase">
             VERIDIAN Atelier

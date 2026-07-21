@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { LogOut } from "lucide-react";
 
 import { logoutAction } from "@/app/atelier/actions";
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -56,14 +56,14 @@ export function AdminShell({
               Administrare
             </p>
           </div>
-          <Link
+          <AdminDocumentLink
             href="/"
             target="_blank"
             rel="noreferrer"
             className="border-obsidian/20 hover:border-veridian-dark h-9 border px-3 text-xs leading-9 font-bold transition-colors"
           >
             Vezi site-ul
-          </Link>
+          </AdminDocumentLink>
         </header>
         <div className="border-obsidian/10 overflow-x-auto border-b lg:hidden">
           <AdminNav compact />

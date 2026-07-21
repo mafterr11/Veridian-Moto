@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft, Eye } from "lucide-react";
 import { z } from "zod";
 
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import {
   ArticleBody,
   formatArticleDate,
@@ -40,12 +40,12 @@ async function EditorialPreviewContent({ params }: PageProps) {
         <span className="inline-flex items-center gap-2">
           <Eye className="size-4" /> Previzualizare protejată · {article.status}
         </span>
-        <Link
+        <AdminDocumentLink
           href="/atelier/descopera"
           className="inline-flex items-center gap-2"
         >
           <ArrowLeft className="size-4" /> Înapoi la editor
-        </Link>
+        </AdminDocumentLink>
       </div>
       <article>
         <header className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">

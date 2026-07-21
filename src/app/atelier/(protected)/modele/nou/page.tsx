@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import { createModelAction } from "@/app/atelier/(protected)/catalogue-actions";
+import { AdminDocumentLink } from "@/components/admin/admin-document-link";
 import { ModelForm } from "@/components/admin/model-form";
 import { AdminPageHeader, AdminSection } from "@/components/admin/page-header";
 import { buttonVariants } from "@/components/ui/button";
@@ -19,12 +19,12 @@ export default function NewModelPage() {
         title="Model nou"
         description="Începe cu identitatea și specificațiile. Modelul este creat ca draft; media și configuratorul se adaugă în editor."
         actions={
-          <Link
+          <AdminDocumentLink
             href="/atelier/modele"
             className={buttonVariants({ variant: "outline" })}
           >
             <ArrowLeft aria-hidden="true" /> Înapoi
-          </Link>
+          </AdminDocumentLink>
         }
       />
       <Suspense fallback={<p className="mt-10 text-sm">Se încarcă…</p>}>
@@ -48,12 +48,12 @@ async function NewModelForm() {
       ) : (
         <p className="text-steel text-sm leading-6">
           Creează mai întâi o categorie în{" "}
-          <Link
+          <AdminDocumentLink
             href="/atelier/categorii"
             className="text-veridian-dark underline"
           >
             administrarea categoriilor
-          </Link>
+          </AdminDocumentLink>
           .
         </p>
       )}

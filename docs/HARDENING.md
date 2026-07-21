@@ -45,6 +45,17 @@ The final local verification completed successfully on 21 July 2026:
 | Performance       | Above-the-fold images load explicitly, duplicate configurator previews are collapsed, source images total under 1 MB, Next image caching is one day, and sitemap/static-param queries use lightweight index projections      |
 | Dependencies      | `pnpm audit --prod` reports no known vulnerabilities; the vulnerable transitive PostCSS range is overridden to 8.5.20                                                                                                        |
 
+### Serverless Atelier stability
+
+Atelier navigation intentionally performs full document requests instead of
+Next.js client transitions. This prevents visible private links from generating a
+burst of duplicate prefetched RSC requests, each of which would repeat
+authorization and live database work. The serverless PostgreSQL client permits one
+connection per function instance and applies finite connection, statement, lock,
+and idle-transaction timeouts. Supabase Auth fetches also have a finite timeout, so
+an unavailable upstream fails closed instead of leaving the interface loading
+indefinitely.
+
 ## Security boundaries
 
 ### Administration
