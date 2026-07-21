@@ -45,6 +45,7 @@ export function AdminNav({ compact = false }: { compact?: boolean }) {
           <Link
             key={href}
             href={href}
+            prefetch={false}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex h-10 items-center gap-3 px-3 text-sm font-bold transition-colors",
