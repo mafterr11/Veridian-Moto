@@ -1,0 +1,49 @@
+name: Quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run static, unit, migration, and build checks
+        run: pnpm check
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod
+
+      - name: Install browser runtime
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run public end-to-end checks
+        run: pnpm test:e2e

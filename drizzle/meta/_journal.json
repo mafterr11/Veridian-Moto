@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1784578461410,
+      "tag": "0000_heavy_black_panther",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784578489739,
+      "tag": "0001_security_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784579753037,
+      "tag": "0002_catalogue_storage",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784615702769,
+      "tag": "0003_phase_9_hardening",
+      "breakpoints": true
+    }
+  ]
+}
