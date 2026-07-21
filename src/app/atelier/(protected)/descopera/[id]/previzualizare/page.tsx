@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { ArrowLeft, Eye } from "lucide-react";
 import { z } from "zod";
 
@@ -17,11 +16,7 @@ export const metadata: Metadata = { title: "Previzualizare articol" };
 type PageProps = { params: Promise<{ id: string }> };
 
 export default function EditorialPreviewPage({ params }: PageProps) {
-  return (
-    <Suspense fallback={<div className="h-svh animate-pulse bg-white" />}>
-      <EditorialPreviewContent params={params} />
-    </Suspense>
-  );
+  return <EditorialPreviewContent params={params} />;
 }
 
 async function EditorialPreviewContent({ params }: PageProps) {

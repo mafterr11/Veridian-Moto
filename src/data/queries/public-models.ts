@@ -1,7 +1,7 @@
 import "server-only";
 
 import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
-import { cacheLife, cacheTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import {
@@ -20,7 +20,6 @@ import {
   type PublicModelDetailDTO,
   type PublicModelDTO,
 } from "@/data/dto/public-model";
-import { modelCacheTag } from "@/data/cache-tags";
 
 export type PublicCategoryDTO = {
   name: string;
@@ -29,11 +28,31 @@ export type PublicCategoryDTO = {
   modelCount: number;
 };
 
-export async function getPublicModelIndexEntries() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels);
+const getCachedPublicModelIndexEntries = unstable_cache(
+  async () => {
+    return getDatabase()
+      .select({
+        slug: motorcycleModels.slug,
+        updatedAt: motorcycleModels.updatedAt,
+      })
+      .from(motorcycleModels)
+      .innerJoin(categories, eq(motorcycleModels.categoryId, categories.id))
+      .where(
+        and(
+          eq(motorcycleModels.status, "published"),
+          eq(categories.status, "published"),
+        ),
+      )
+      .orderBy(asc(motorcycleModels.slug));
+  },
+  ["public-model-index"],
+  {
+    revalidate: 3_600,
+    tags: [CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels],
+  },
+);
 
+export async function getPublicModelIndexEntries() {
   if (!isDatabaseConfigured()) {
     return motorcycles.map(({ slug }) => ({
       slug,
@@ -41,39 +60,10 @@ export async function getPublicModelIndexEntries() {
     }));
   }
 
-  return getDatabase()
-    .select({
-      slug: motorcycleModels.slug,
-      updatedAt: motorcycleModels.updatedAt,
-    })
-    .from(motorcycleModels)
-    .innerJoin(categories, eq(motorcycleModels.categoryId, categories.id))
-    .where(
-      and(
-        eq(motorcycleModels.status, "published"),
-        eq(categories.status, "published"),
-      ),
-    )
-    .orderBy(asc(motorcycleModels.slug));
+  return getCachedPublicModelIndexEntries();
 }
 
-export async function getPublicCategories(): Promise<
-  readonly PublicCategoryDTO[]
-> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels);
-
-  if (!isDatabaseConfigured()) {
-    const names = [...new Set(motorcycles.map((model) => model.category))];
-    return names.map((name) => ({
-      name,
-      slug: name.toLocaleLowerCase("ro-RO").replaceAll(" ", "-"),
-      description: `Modelele VERIDIAN din categoria ${name}.`,
-      modelCount: motorcycles.filter((model) => model.category === name).length,
-    }));
-  }
-
+async function loadPublicCategories(): Promise<readonly PublicCategoryDTO[]> {
   return getDatabase()
     .select({
       name: categories.name,
@@ -94,15 +84,32 @@ export async function getPublicCategories(): Promise<
     .orderBy(asc(categories.sortOrder), asc(categories.name));
 }
 
-export async function getPublicModels(): Promise<readonly PublicModelDTO[]> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels);
+const getCachedPublicCategories = unstable_cache(
+  loadPublicCategories,
+  ["public-model-categories"],
+  {
+    revalidate: 3_600,
+    tags: [CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels],
+  },
+);
 
+export async function getPublicCategories(): Promise<
+  readonly PublicCategoryDTO[]
+> {
   if (!isDatabaseConfigured()) {
-    return motorcycles;
+    const names = [...new Set(motorcycles.map((model) => model.category))];
+    return names.map((name) => ({
+      name,
+      slug: name.toLocaleLowerCase("ro-RO").replaceAll(" ", "-"),
+      description: `Modelele VERIDIAN din categoria ${name}.`,
+      modelCount: motorcycles.filter((model) => model.category === name).length,
+    }));
   }
 
+  return getCachedPublicCategories();
+}
+
+async function loadPublicModels(): Promise<readonly PublicModelDTO[]> {
   const db = getDatabase();
   const modelRows = await db
     .select({
@@ -134,54 +141,52 @@ export async function getPublicModels(): Promise<readonly PublicModelDTO[]> {
   }
 
   const modelIds = modelRows.map((model) => model.id);
-  const [inventoryRows, mediaRows, featureRows] = await Promise.all([
-    db
-      .select({
-        modelId: inventoryUnits.modelId,
-        available:
-          sql<number>`count(*) filter (where ${inventoryUnits.status} = 'available')`.mapWith(
-            Number,
-          ),
-        incoming:
-          sql<number>`count(*) filter (where ${inventoryUnits.status} = 'incoming')`.mapWith(
-            Number,
-          ),
-      })
-      .from(inventoryUnits)
-      .where(
-        and(
-          eq(inventoryUnits.isPublic, true),
-          inArray(inventoryUnits.modelId, modelIds),
+  const inventoryRows = await db
+    .select({
+      modelId: inventoryUnits.modelId,
+      available:
+        sql<number>`count(*) filter (where ${inventoryUnits.status} = 'available')`.mapWith(
+          Number,
         ),
-      )
-      .groupBy(inventoryUnits.modelId),
-    db
-      .select({
-        modelId: modelMedia.modelId,
-        path: mediaAssets.storagePath,
-        alt: mediaAssets.altText,
-      })
-      .from(modelMedia)
-      .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
-      .where(
-        and(eq(modelMedia.role, "card"), inArray(modelMedia.modelId, modelIds)),
-      )
-      .orderBy(asc(modelMedia.sortOrder)),
-    db
-      .select({
-        modelId: modelFeatures.modelId,
-        label: modelFeatures.label,
-        value: modelFeatures.value,
-      })
-      .from(modelFeatures)
-      .where(
-        and(
-          eq(modelFeatures.isStandard, true),
-          inArray(modelFeatures.modelId, modelIds),
+      incoming:
+        sql<number>`count(*) filter (where ${inventoryUnits.status} = 'incoming')`.mapWith(
+          Number,
         ),
-      )
-      .orderBy(asc(modelFeatures.sortOrder)),
-  ]);
+    })
+    .from(inventoryUnits)
+    .where(
+      and(
+        eq(inventoryUnits.isPublic, true),
+        inArray(inventoryUnits.modelId, modelIds),
+      ),
+    )
+    .groupBy(inventoryUnits.modelId);
+  const mediaRows = await db
+    .select({
+      modelId: modelMedia.modelId,
+      path: mediaAssets.storagePath,
+      alt: mediaAssets.altText,
+    })
+    .from(modelMedia)
+    .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
+    .where(
+      and(eq(modelMedia.role, "card"), inArray(modelMedia.modelId, modelIds)),
+    )
+    .orderBy(asc(modelMedia.sortOrder));
+  const featureRows = await db
+    .select({
+      modelId: modelFeatures.modelId,
+      label: modelFeatures.label,
+      value: modelFeatures.value,
+    })
+    .from(modelFeatures)
+    .where(
+      and(
+        eq(modelFeatures.isStandard, true),
+        inArray(modelFeatures.modelId, modelIds),
+      ),
+    )
+    .orderBy(asc(modelFeatures.sortOrder));
 
   const inventoryByModel = new Map(
     inventoryRows.map((inventory) => [inventory.modelId, inventory]),
@@ -209,56 +214,23 @@ export async function getPublicModels(): Promise<readonly PublicModelDTO[]> {
   );
 }
 
-export async function getPublicModel(
-  slug?: string,
+const getCachedPublicModels = unstable_cache(
+  loadPublicModels,
+  ["public-models"],
+  {
+    revalidate: 3_600,
+    tags: [CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels],
+  },
+);
+
+export async function getPublicModels(): Promise<readonly PublicModelDTO[]> {
+  if (!isDatabaseConfigured()) return motorcycles;
+  return getCachedPublicModels();
+}
+
+async function loadPublicModel(
+  slug: string,
 ): Promise<PublicModelDetailDTO | undefined> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(
-    CACHE_TAGS.publicCatalogue,
-    CACHE_TAGS.publicModels,
-    CACHE_TAGS.publicInventory,
-  );
-
-  // Cache Components can prerender the generic dynamic route before a concrete
-  // parameter exists. Never pass that temporary undefined value to Drizzle.
-  if (!slug) return undefined;
-
-  cacheTag(modelCacheTag(slug));
-
-  if (!isDatabaseConfigured()) {
-    const model = getModel(slug);
-    const metadata = demoModelMetadata[slug];
-    if (!model || !metadata) return undefined;
-
-    return {
-      ...model,
-      tagline: metadata.tagline,
-      fullDescription: model.description,
-      modelYear: metadata.modelYear,
-      seatHeightMm: metadata.seatHeightMm,
-      configuratorEnabled: metadata.configuratorEnabled,
-      media: [{ path: model.image, alt: model.imageAlt, role: "hero" }],
-      inventory: Array.from(
-        {
-          length: model.stockCount || model.availability === "incoming" ? 1 : 0,
-        },
-        (_, index) => ({
-          stockCode: `${model.slug.toUpperCase()}-${String(index + 1).padStart(3, "0")}`,
-          condition: "new" as const,
-          year: metadata.modelYear,
-          mileageKm: 0,
-          colour: "Configurație standard",
-          price: model.price,
-          status:
-            model.availability === "incoming"
-              ? ("incoming" as const)
-              : ("available" as const),
-        }),
-      ),
-    };
-  }
-
   const db = getDatabase();
   const [row] = await db
     .select({
@@ -293,69 +265,66 @@ export async function getPublicModel(
 
   if (!row) return undefined;
 
-  const [inventoryRows, mediaRows, inventoryMediaRows, featureRows] =
-    await Promise.all([
-      db
-        .select({
-          id: inventoryUnits.id,
-          stockCode: inventoryUnits.stockCode,
-          condition: inventoryUnits.condition,
-          year: inventoryUnits.year,
-          mileageKm: inventoryUnits.mileageKm,
-          colour: inventoryUnits.colour,
-          priceMinor: inventoryUnits.priceMinor,
-          status: inventoryUnits.status,
-        })
-        .from(inventoryUnits)
-        .where(
-          and(
-            eq(inventoryUnits.modelId, row.id),
-            eq(inventoryUnits.isPublic, true),
-            inArray(inventoryUnits.status, ["incoming", "available"]),
-          ),
-        )
-        .orderBy(asc(inventoryUnits.priceMinor)),
-      db
-        .select({
-          path: mediaAssets.storagePath,
-          alt: mediaAssets.altText,
-          role: modelMedia.role,
-          sortOrder: modelMedia.sortOrder,
-        })
-        .from(modelMedia)
-        .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
-        .where(eq(modelMedia.modelId, row.id))
-        .orderBy(asc(modelMedia.sortOrder)),
-      db
-        .select({
-          inventoryUnitId: inventoryMedia.inventoryUnitId,
-          path: mediaAssets.storagePath,
-          alt: mediaAssets.altText,
-        })
-        .from(inventoryMedia)
-        .innerJoin(mediaAssets, eq(inventoryMedia.mediaId, mediaAssets.id))
-        .innerJoin(
-          inventoryUnits,
-          eq(inventoryMedia.inventoryUnitId, inventoryUnits.id),
-        )
-        .where(
-          and(
-            eq(inventoryUnits.modelId, row.id),
-            eq(inventoryUnits.isPublic, true),
-          ),
-        )
-        .orderBy(asc(inventoryMedia.sortOrder)),
-      db
-        .select({ label: modelFeatures.label, value: modelFeatures.value })
-        .from(modelFeatures)
-        .where(
-          and(
-            eq(modelFeatures.modelId, row.id),
-            eq(modelFeatures.isStandard, true),
-          ),
-        )
-        .orderBy(asc(modelFeatures.sortOrder)),
-    ]);
+  const inventoryRows = await db
+    .select({
+      id: inventoryUnits.id,
+      stockCode: inventoryUnits.stockCode,
+      condition: inventoryUnits.condition,
+      year: inventoryUnits.year,
+      mileageKm: inventoryUnits.mileageKm,
+      colour: inventoryUnits.colour,
+      priceMinor: inventoryUnits.priceMinor,
+      status: inventoryUnits.status,
+    })
+    .from(inventoryUnits)
+    .where(
+      and(
+        eq(inventoryUnits.modelId, row.id),
+        eq(inventoryUnits.isPublic, true),
+        inArray(inventoryUnits.status, ["incoming", "available"]),
+      ),
+    )
+    .orderBy(asc(inventoryUnits.priceMinor));
+  const mediaRows = await db
+    .select({
+      path: mediaAssets.storagePath,
+      alt: mediaAssets.altText,
+      role: modelMedia.role,
+      sortOrder: modelMedia.sortOrder,
+    })
+    .from(modelMedia)
+    .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
+    .where(eq(modelMedia.modelId, row.id))
+    .orderBy(asc(modelMedia.sortOrder));
+  const inventoryMediaRows = await db
+    .select({
+      inventoryUnitId: inventoryMedia.inventoryUnitId,
+      path: mediaAssets.storagePath,
+      alt: mediaAssets.altText,
+    })
+    .from(inventoryMedia)
+    .innerJoin(mediaAssets, eq(inventoryMedia.mediaId, mediaAssets.id))
+    .innerJoin(
+      inventoryUnits,
+      eq(inventoryMedia.inventoryUnitId, inventoryUnits.id),
+    )
+    .where(
+      and(
+        eq(inventoryUnits.modelId, row.id),
+        eq(inventoryUnits.isPublic, true),
+      ),
+    )
+    .orderBy(asc(inventoryMedia.sortOrder));
+  const featureRows = await db
+    .select({ label: modelFeatures.label, value: modelFeatures.value })
+    .from(modelFeatures)
+    .where(
+      and(
+        eq(modelFeatures.modelId, row.id),
+        eq(modelFeatures.isStandard, true),
+      ),
+    )
+    .orderBy(asc(modelFeatures.sortOrder));
 
   const inventoryMediaByUnit = new Map(
     inventoryMediaRows.map((media) => [media.inventoryUnitId, media]),
@@ -400,4 +369,54 @@ export async function getPublicModel(
       };
     }),
   };
+}
+
+const getCachedPublicModel = unstable_cache(loadPublicModel, ["public-model"], {
+  revalidate: 3_600,
+  tags: [
+    CACHE_TAGS.publicCatalogue,
+    CACHE_TAGS.publicModels,
+    CACHE_TAGS.publicInventory,
+  ],
+});
+
+export async function getPublicModel(
+  slug?: string,
+): Promise<PublicModelDetailDTO | undefined> {
+  if (!slug) return undefined;
+
+  if (!isDatabaseConfigured()) {
+    const model = getModel(slug);
+    const metadata = demoModelMetadata[slug];
+    if (!model || !metadata) return undefined;
+
+    return {
+      ...model,
+      tagline: metadata.tagline,
+      fullDescription: model.description,
+      modelYear: metadata.modelYear,
+      seatHeightMm: metadata.seatHeightMm,
+      configuratorEnabled: metadata.configuratorEnabled,
+      media: [{ path: model.image, alt: model.imageAlt, role: "hero" }],
+      inventory: Array.from(
+        {
+          length: model.stockCount || model.availability === "incoming" ? 1 : 0,
+        },
+        (_, index) => ({
+          stockCode: `${model.slug.toUpperCase()}-${String(index + 1).padStart(3, "0")}`,
+          condition: "new" as const,
+          year: metadata.modelYear,
+          mileageKm: 0,
+          colour: "Configurație standard",
+          price: model.price,
+          status:
+            model.availability === "incoming"
+              ? ("incoming" as const)
+              : ("available" as const),
+        }),
+      ),
+    };
+  }
+
+  return getCachedPublicModel(slug);
 }

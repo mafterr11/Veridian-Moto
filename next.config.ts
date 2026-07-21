@@ -24,7 +24,6 @@ function catalogueRemotePatterns(): NonNullable<
 }
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
   poweredByHeader: false,
   typedRoutes: true,
   experimental: {

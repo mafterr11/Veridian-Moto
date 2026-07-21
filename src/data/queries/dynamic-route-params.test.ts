@@ -9,8 +9,7 @@ const databaseMocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({
-  cacheLife: vi.fn(),
-  cacheTag: vi.fn(),
+  unstable_cache: vi.fn((callback) => callback),
 }));
 vi.mock("@/db/client", () => databaseMocks);
 

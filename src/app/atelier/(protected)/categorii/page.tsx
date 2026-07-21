@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
 import {
   archiveCategoryAction,
@@ -30,9 +29,7 @@ export default function AdminCategoriesPage() {
         title="Categorii"
         description="Organizează gama publică. O categorie publicată poate primi modele; una folosită nu poate fi arhivată accidental."
       />
-      <Suspense fallback={<p className="mt-10 text-sm">Se încarcă…</p>}>
-        <CategoriesWorkspace />
-      </Suspense>
+      <CategoriesWorkspace />
     </main>
   );
 }

@@ -49,41 +49,30 @@ export async function getAdminDashboardCounts() {
   }
 
   const db = getDatabase();
-  const [
-    modelCount,
-    publishedCount,
-    inventoryCount,
-    accessoryCount,
-    inquiryCount,
-    articleCount,
-  ] = await Promise.all([
-    db.select({ value: count() }).from(motorcycleModels),
-    db
-      .select({ value: count() })
-      .from(motorcycleModels)
-      .where(eq(motorcycleModels.status, "published")),
-    db
-      .select({ value: count() })
-      .from(inventoryUnits)
-      .where(eq(inventoryUnits.isPublic, true)),
-    db.select({ value: count() }).from(accessories),
-    db
-      .select({ value: count() })
-      .from(inquiries)
-      .where(eq(inquiries.status, "new")),
-    db
-      .select({ value: count() })
-      .from(discoverPosts)
-      .where(eq(discoverPosts.status, "published")),
-  ]);
+  const [counts] = await db.execute<{
+    models: number;
+    publishedModels: number;
+    publicInventory: number;
+    accessories: number;
+    newInquiries: number;
+    publishedArticles: number;
+  }>(sql`
+    select
+      (select count(*)::int from ${motorcycleModels}) as "models",
+      (select count(*)::int from ${motorcycleModels} where ${motorcycleModels.status} = 'published') as "publishedModels",
+      (select count(*)::int from ${inventoryUnits} where ${inventoryUnits.isPublic} = true) as "publicInventory",
+      (select count(*)::int from ${accessories}) as "accessories",
+      (select count(*)::int from ${inquiries} where ${inquiries.status} = 'new') as "newInquiries",
+      (select count(*)::int from ${discoverPosts} where ${discoverPosts.status} = 'published') as "publishedArticles"
+  `);
 
   return {
-    models: modelCount[0]?.value ?? 0,
-    publishedModels: publishedCount[0]?.value ?? 0,
-    publicInventory: inventoryCount[0]?.value ?? 0,
-    accessories: accessoryCount[0]?.value ?? 0,
-    newInquiries: inquiryCount[0]?.value ?? 0,
-    publishedArticles: articleCount[0]?.value ?? 0,
+    models: counts?.models ?? 0,
+    publishedModels: counts?.publishedModels ?? 0,
+    publicInventory: counts?.publicInventory ?? 0,
+    accessories: counts?.accessories ?? 0,
+    newInquiries: counts?.newInquiries ?? 0,
+    publishedArticles: counts?.publishedArticles ?? 0,
   };
 }
 
@@ -168,106 +157,95 @@ export async function getAdminModelEditor(id: string) {
 
   if (!model) return null;
 
-  const [
-    categoryRows,
-    featureRows,
-    mediaRows,
-    allMedia,
-    groupRows,
-    choiceRows,
-    ruleRows,
-    accessoryRows,
-  ] = await Promise.all([
-    db
-      .select({
-        id: categories.id,
-        name: categories.name,
-        status: categories.status,
-      })
-      .from(categories)
-      .where(sql`${categories.status} <> 'archived'`)
-      .orderBy(asc(categories.sortOrder), asc(categories.name)),
-    db
-      .select()
-      .from(modelFeatures)
-      .where(eq(modelFeatures.modelId, id))
-      .orderBy(asc(modelFeatures.sortOrder)),
-    db
-      .select({
-        id: modelMedia.id,
-        mediaId: mediaAssets.id,
-        role: modelMedia.role,
-        viewAngle: modelMedia.viewAngle,
-        sortOrder: modelMedia.sortOrder,
-        storagePath: mediaAssets.storagePath,
-        altText: mediaAssets.altText,
-        width: mediaAssets.width,
-        height: mediaAssets.height,
-      })
-      .from(modelMedia)
-      .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
-      .where(eq(modelMedia.modelId, id))
-      .orderBy(asc(modelMedia.role), asc(modelMedia.sortOrder)),
-    db
-      .select({
-        id: mediaAssets.id,
-        storagePath: mediaAssets.storagePath,
-        altText: mediaAssets.altText,
-        width: mediaAssets.width,
-        height: mediaAssets.height,
-      })
-      .from(mediaAssets)
-      .orderBy(desc(mediaAssets.createdAt))
-      .limit(100),
-    db
-      .select()
-      .from(optionGroups)
-      .where(eq(optionGroups.modelId, id))
-      .orderBy(asc(optionGroups.sortOrder)),
-    db
-      .select({
-        id: optionChoices.id,
-        groupId: optionChoices.groupId,
-        code: optionChoices.code,
-        name: optionChoices.name,
-        description: optionChoices.description,
-        priceDeltaMinor: optionChoices.priceDeltaMinor,
-        swatchHex: optionChoices.swatchHex,
-        mediaId: optionChoices.mediaId,
-        accessoryId: optionChoices.accessoryId,
-        isStandard: optionChoices.isStandard,
-        sortOrder: optionChoices.sortOrder,
-        status: optionChoices.status,
-      })
-      .from(optionChoices)
-      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-      .where(eq(optionGroups.modelId, id))
-      .orderBy(asc(optionChoices.sortOrder)),
-    db
-      .select({
-        id: optionRules.id,
-        sourceChoiceId: optionRules.sourceChoiceId,
-        targetChoiceId: optionRules.targetChoiceId,
-        ruleType: optionRules.ruleType,
-        explanation: optionRules.explanation,
-      })
-      .from(optionRules)
-      .innerJoin(
-        optionChoices,
-        eq(optionRules.sourceChoiceId, optionChoices.id),
-      )
-      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-      .where(eq(optionGroups.modelId, id)),
-    db
-      .select({
-        id: accessories.id,
-        name: accessories.name,
-        sku: accessories.sku,
-      })
-      .from(accessories)
-      .where(sql`${accessories.status} <> 'archived'`)
-      .orderBy(asc(accessories.name)),
-  ]);
+  // The runtime pool intentionally owns one connection. Run related reads in
+  // sequence so a failed first query does not leave seven queued statements
+  // occupying that connection after the response has already failed.
+  const categoryRows = await db
+    .select({
+      id: categories.id,
+      name: categories.name,
+      status: categories.status,
+    })
+    .from(categories)
+    .where(sql`${categories.status} <> 'archived'`)
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
+  const featureRows = await db
+    .select()
+    .from(modelFeatures)
+    .where(eq(modelFeatures.modelId, id))
+    .orderBy(asc(modelFeatures.sortOrder));
+  const mediaRows = await db
+    .select({
+      id: modelMedia.id,
+      mediaId: mediaAssets.id,
+      role: modelMedia.role,
+      viewAngle: modelMedia.viewAngle,
+      sortOrder: modelMedia.sortOrder,
+      storagePath: mediaAssets.storagePath,
+      altText: mediaAssets.altText,
+      width: mediaAssets.width,
+      height: mediaAssets.height,
+    })
+    .from(modelMedia)
+    .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
+    .where(eq(modelMedia.modelId, id))
+    .orderBy(asc(modelMedia.role), asc(modelMedia.sortOrder));
+  const allMedia = await db
+    .select({
+      id: mediaAssets.id,
+      storagePath: mediaAssets.storagePath,
+      altText: mediaAssets.altText,
+      width: mediaAssets.width,
+      height: mediaAssets.height,
+    })
+    .from(mediaAssets)
+    .orderBy(desc(mediaAssets.createdAt))
+    .limit(100);
+  const groupRows = await db
+    .select()
+    .from(optionGroups)
+    .where(eq(optionGroups.modelId, id))
+    .orderBy(asc(optionGroups.sortOrder));
+  const choiceRows = await db
+    .select({
+      id: optionChoices.id,
+      groupId: optionChoices.groupId,
+      code: optionChoices.code,
+      name: optionChoices.name,
+      description: optionChoices.description,
+      priceDeltaMinor: optionChoices.priceDeltaMinor,
+      swatchHex: optionChoices.swatchHex,
+      mediaId: optionChoices.mediaId,
+      accessoryId: optionChoices.accessoryId,
+      isStandard: optionChoices.isStandard,
+      sortOrder: optionChoices.sortOrder,
+      status: optionChoices.status,
+    })
+    .from(optionChoices)
+    .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+    .where(eq(optionGroups.modelId, id))
+    .orderBy(asc(optionChoices.sortOrder));
+  const ruleRows = await db
+    .select({
+      id: optionRules.id,
+      sourceChoiceId: optionRules.sourceChoiceId,
+      targetChoiceId: optionRules.targetChoiceId,
+      ruleType: optionRules.ruleType,
+      explanation: optionRules.explanation,
+    })
+    .from(optionRules)
+    .innerJoin(optionChoices, eq(optionRules.sourceChoiceId, optionChoices.id))
+    .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+    .where(eq(optionGroups.modelId, id));
+  const accessoryRows = await db
+    .select({
+      id: accessories.id,
+      name: accessories.name,
+      sku: accessories.sku,
+    })
+    .from(accessories)
+    .where(sql`${accessories.status} <> 'archived'`)
+    .orderBy(asc(accessories.name));
 
   return {
     model,
@@ -304,58 +282,56 @@ export async function getAdminInventoryWorkspace() {
   }
 
   const db = getDatabase();
-  const [models, units, attachedMedia, mediaLibrary] = await Promise.all([
-    db
-      .select({
-        id: motorcycleModels.id,
-        name: motorcycleModels.name,
-        basePriceMinor: motorcycleModels.basePriceMinor,
-      })
-      .from(motorcycleModels)
-      .where(sql`${motorcycleModels.status} <> 'archived'`)
-      .orderBy(asc(motorcycleModels.name)),
-    db
-      .select({
-        id: inventoryUnits.id,
-        modelId: inventoryUnits.modelId,
-        modelName: motorcycleModels.name,
-        stockCode: inventoryUnits.stockCode,
-        vin: inventoryUnits.vin,
-        condition: inventoryUnits.condition,
-        year: inventoryUnits.year,
-        mileageKm: inventoryUnits.mileageKm,
-        colour: inventoryUnits.colour,
-        priceMinor: inventoryUnits.priceMinor,
-        currency: inventoryUnits.currency,
-        status: inventoryUnits.status,
-        isPublic: inventoryUnits.isPublic,
-        privateNotes: inventoryUnits.privateNotes,
-        updatedAt: inventoryUnits.updatedAt,
-      })
-      .from(inventoryUnits)
-      .innerJoin(
-        motorcycleModels,
-        eq(inventoryUnits.modelId, motorcycleModels.id),
-      )
-      .orderBy(desc(inventoryUnits.updatedAt)),
-    db
-      .select({
-        id: inventoryMedia.id,
-        inventoryUnitId: inventoryMedia.inventoryUnitId,
-        mediaId: mediaAssets.id,
-        storagePath: mediaAssets.storagePath,
-        altText: mediaAssets.altText,
-        sortOrder: inventoryMedia.sortOrder,
-      })
-      .from(inventoryMedia)
-      .innerJoin(mediaAssets, eq(inventoryMedia.mediaId, mediaAssets.id))
-      .orderBy(asc(inventoryMedia.sortOrder)),
-    db
-      .select({ id: mediaAssets.id, altText: mediaAssets.altText })
-      .from(mediaAssets)
-      .orderBy(desc(mediaAssets.createdAt))
-      .limit(100),
-  ]);
+  const models = await db
+    .select({
+      id: motorcycleModels.id,
+      name: motorcycleModels.name,
+      basePriceMinor: motorcycleModels.basePriceMinor,
+    })
+    .from(motorcycleModels)
+    .where(sql`${motorcycleModels.status} <> 'archived'`)
+    .orderBy(asc(motorcycleModels.name));
+  const units = await db
+    .select({
+      id: inventoryUnits.id,
+      modelId: inventoryUnits.modelId,
+      modelName: motorcycleModels.name,
+      stockCode: inventoryUnits.stockCode,
+      vin: inventoryUnits.vin,
+      condition: inventoryUnits.condition,
+      year: inventoryUnits.year,
+      mileageKm: inventoryUnits.mileageKm,
+      colour: inventoryUnits.colour,
+      priceMinor: inventoryUnits.priceMinor,
+      currency: inventoryUnits.currency,
+      status: inventoryUnits.status,
+      isPublic: inventoryUnits.isPublic,
+      privateNotes: inventoryUnits.privateNotes,
+      updatedAt: inventoryUnits.updatedAt,
+    })
+    .from(inventoryUnits)
+    .innerJoin(
+      motorcycleModels,
+      eq(inventoryUnits.modelId, motorcycleModels.id),
+    )
+    .orderBy(desc(inventoryUnits.updatedAt));
+  const attachedMedia = await db
+    .select({
+      id: inventoryMedia.id,
+      inventoryUnitId: inventoryMedia.inventoryUnitId,
+      mediaId: mediaAssets.id,
+      storagePath: mediaAssets.storagePath,
+      altText: mediaAssets.altText,
+      sortOrder: inventoryMedia.sortOrder,
+    })
+    .from(inventoryMedia)
+    .innerJoin(mediaAssets, eq(inventoryMedia.mediaId, mediaAssets.id))
+    .orderBy(asc(inventoryMedia.sortOrder));
+  const mediaLibrary = await db
+    .select({ id: mediaAssets.id, altText: mediaAssets.altText })
+    .from(mediaAssets)
+    .orderBy(desc(mediaAssets.createdAt))
+    .limit(100);
 
   return { models, units, media: attachedMedia, mediaLibrary };
 }
@@ -373,66 +349,57 @@ export async function getAdminAccessoryWorkspace() {
   }
 
   const db = getDatabase();
-  const [
-    categoryRows,
-    modelRows,
-    accessoryRows,
-    compatibilityRows,
-    attachedMedia,
-    mediaLibrary,
-  ] = await Promise.all([
-    db
-      .select()
-      .from(accessoryCategories)
-      .orderBy(asc(accessoryCategories.sortOrder)),
-    db
-      .select({ id: motorcycleModels.id, name: motorcycleModels.name })
-      .from(motorcycleModels)
-      .where(sql`${motorcycleModels.status} <> 'archived'`)
-      .orderBy(asc(motorcycleModels.name)),
-    db
-      .select({
-        id: accessories.id,
-        categoryId: accessories.categoryId,
-        categoryName: accessoryCategories.name,
-        name: accessories.name,
-        slug: accessories.slug,
-        sku: accessories.sku,
-        summary: accessories.summary,
-        description: accessories.description,
-        priceMinor: accessories.priceMinor,
-        currency: accessories.currency,
-        stockState: accessories.stockState,
-        internalQuantity: accessories.internalQuantity,
-        featured: accessories.featured,
-        status: accessories.status,
-        updatedAt: accessories.updatedAt,
-      })
-      .from(accessories)
-      .innerJoin(
-        accessoryCategories,
-        eq(accessories.categoryId, accessoryCategories.id),
-      )
-      .orderBy(desc(accessories.updatedAt)),
-    db.select().from(accessoryCompatibility),
-    db
-      .select({
-        id: accessoryMedia.id,
-        accessoryId: accessoryMedia.accessoryId,
-        mediaId: mediaAssets.id,
-        storagePath: mediaAssets.storagePath,
-        altText: mediaAssets.altText,
-        sortOrder: accessoryMedia.sortOrder,
-      })
-      .from(accessoryMedia)
-      .innerJoin(mediaAssets, eq(accessoryMedia.mediaId, mediaAssets.id))
-      .orderBy(asc(accessoryMedia.sortOrder)),
-    db
-      .select({ id: mediaAssets.id, altText: mediaAssets.altText })
-      .from(mediaAssets)
-      .orderBy(desc(mediaAssets.createdAt))
-      .limit(100),
-  ]);
+  const categoryRows = await db
+    .select()
+    .from(accessoryCategories)
+    .orderBy(asc(accessoryCategories.sortOrder));
+  const modelRows = await db
+    .select({ id: motorcycleModels.id, name: motorcycleModels.name })
+    .from(motorcycleModels)
+    .where(sql`${motorcycleModels.status} <> 'archived'`)
+    .orderBy(asc(motorcycleModels.name));
+  const accessoryRows = await db
+    .select({
+      id: accessories.id,
+      categoryId: accessories.categoryId,
+      categoryName: accessoryCategories.name,
+      name: accessories.name,
+      slug: accessories.slug,
+      sku: accessories.sku,
+      summary: accessories.summary,
+      description: accessories.description,
+      priceMinor: accessories.priceMinor,
+      currency: accessories.currency,
+      stockState: accessories.stockState,
+      internalQuantity: accessories.internalQuantity,
+      featured: accessories.featured,
+      status: accessories.status,
+      updatedAt: accessories.updatedAt,
+    })
+    .from(accessories)
+    .innerJoin(
+      accessoryCategories,
+      eq(accessories.categoryId, accessoryCategories.id),
+    )
+    .orderBy(desc(accessories.updatedAt));
+  const compatibilityRows = await db.select().from(accessoryCompatibility);
+  const attachedMedia = await db
+    .select({
+      id: accessoryMedia.id,
+      accessoryId: accessoryMedia.accessoryId,
+      mediaId: mediaAssets.id,
+      storagePath: mediaAssets.storagePath,
+      altText: mediaAssets.altText,
+      sortOrder: accessoryMedia.sortOrder,
+    })
+    .from(accessoryMedia)
+    .innerJoin(mediaAssets, eq(accessoryMedia.mediaId, mediaAssets.id))
+    .orderBy(asc(accessoryMedia.sortOrder));
+  const mediaLibrary = await db
+    .select({ id: mediaAssets.id, altText: mediaAssets.altText })
+    .from(mediaAssets)
+    .orderBy(desc(mediaAssets.createdAt))
+    .limit(100);
 
   return {
     categories: categoryRows,

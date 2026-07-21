@@ -75,10 +75,9 @@ table also has RLS enabled and no Data API policies.
 
 Production responses omit `unsafe-eval`; development retains it for Next.js
 tooling. The CSP currently retains `unsafe-inline` for scripts and styles because
-the App Router emits inline bootstrapping/structured-data content and several
-routes use cached or partially prerendered output. A nonce-based CSP would require
-a deliberate rendering/caching redesign and should not be represented as a small
-configuration change.
+the App Router emits inline bootstrapping and the public layout emits structured
+data. A nonce-based CSP would require a deliberate rendering/caching redesign and
+should not be represented as a small configuration change.
 
 HSTS is emitted only in production. Do not deploy that header on a hostname that
 cannot remain HTTPS, especially with `includeSubDomains` and `preload` enabled.

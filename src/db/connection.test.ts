@@ -6,6 +6,8 @@ describe("serverless database options", () => {
   it("bounds each function instance to one short-lived pooled connection", () => {
     expect(serverlessDatabaseOptions).toMatchObject({
       prepare: false,
+      fetch_types: false,
+      ssl: "require",
       max: 1,
       idle_timeout: 10,
       connect_timeout: 10,

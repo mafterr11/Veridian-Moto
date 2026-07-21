@@ -27,16 +27,18 @@ Accessory DTOs never select internal quantity. Only explicitly public stock in
 
 ## Caching and invalidation
 
-Public queries use `use cache`, a one-hour cache life, and catalogue/entity tags.
-Atelier mutations revalidate model, inventory, accessory, and global catalogue tags.
-The site can therefore serve prerendered catalogue pages while reflecting reviewed
-admin changes without a deployment.
+Public database loaders use `unstable_cache` with a one-hour lifetime and grouped
+catalogue tags. Atelier mutations revalidate model, inventory, accessory, editorial,
+and settings groups. Public routes remain request-rendered, while the reusable data
+results are cached between requests. This keeps builds independent from PostgreSQL,
+reflects reviewed admin changes without a deployment, and avoids Partial
+Prerendering streams around private or database-dependent work.
 
 ## Search and structured data
 
 Model details generate canonical metadata and Open Graph images from the published
 record. Each model renders sanitized `Product` JSON-LD with brand, images, category,
-price, and availability. The root layout renders `MotorcycleDealer` JSON-LD.
+price, and availability. The public layout renders `MotorcycleDealer` JSON-LD.
 Dynamic sitemap entries include only models returned by the published DTO boundary.
 
 JSON-LD serialization replaces `<` with its Unicode escape to prevent catalogue text

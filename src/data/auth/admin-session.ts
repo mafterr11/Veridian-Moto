@@ -24,7 +24,8 @@ export type AdminAuthState =
   | { status: "missing-configuration" }
   | { status: "unauthenticated" }
   | { status: "forbidden" }
-  | { status: "unprovisioned" };
+  | { status: "unprovisioned" }
+  | { status: "service-unavailable" };
 
 export class AdminAuthorizationError extends Error {
   constructor() {
@@ -69,7 +70,9 @@ export const getAdminAuthState = cache(async (): Promise<AdminAuthState> => {
   try {
     claimsResult = await supabase.auth.getClaims();
   } catch (cause) {
-    console.error("Atelier could not verify the Supabase session.", cause);
+    console.error("Atelier could not verify the Supabase session.", {
+      name: cause instanceof Error ? cause.name : "UnknownError",
+    });
     return { status: "unauthenticated" };
   }
 
@@ -89,7 +92,25 @@ export const getAdminAuthState = cache(async (): Promise<AdminAuthState> => {
     return { status: "forbidden" };
   }
 
-  const profile = await findActiveAdminProfile(claims.id);
+  let profile: Awaited<ReturnType<typeof findActiveAdminProfile>>;
+
+  try {
+    profile = await findActiveAdminProfile(claims.id);
+  } catch (cause) {
+    const databaseCause =
+      cause && typeof cause === "object" && "cause" in cause
+        ? cause.cause
+        : cause;
+    const code =
+      databaseCause &&
+      typeof databaseCause === "object" &&
+      "code" in databaseCause &&
+      typeof databaseCause.code === "string"
+        ? databaseCause.code
+        : "UNKNOWN";
+    console.error("Atelier database authorization check failed.", { code });
+    return { status: "service-unavailable" };
+  }
 
   if (!profile) {
     return { status: "unprovisioned" };

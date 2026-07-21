@@ -546,62 +546,50 @@ export async function publishModel(id: string) {
 
     if (!model) throw new AdminMutationError("Modelul nu mai există.");
 
-    const [mediaRows, groupRows, choiceRows, ruleRows, featureRows] =
-      await Promise.all([
-        tx
-          .select({ role: modelMedia.role, viewAngle: modelMedia.viewAngle })
-          .from(modelMedia)
-          .where(eq(modelMedia.modelId, id)),
-        tx
-          .select()
-          .from(optionGroups)
-          .where(
-            and(
-              eq(optionGroups.modelId, id),
-              ne(optionGroups.status, "archived"),
-            ),
-          ),
-        tx
-          .select({
-            id: optionChoices.id,
-            groupId: optionChoices.groupId,
-            name: optionChoices.name,
-            description: optionChoices.description,
-            priceDeltaMinor: optionChoices.priceDeltaMinor,
-            isStandard: optionChoices.isStandard,
-            status: optionChoices.status,
-          })
-          .from(optionChoices)
-          .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-          .where(
-            and(
-              eq(optionGroups.modelId, id),
-              ne(optionGroups.status, "archived"),
-            ),
-          ),
-        tx
-          .select({
-            sourceChoiceId: optionRules.sourceChoiceId,
-            targetChoiceId: optionRules.targetChoiceId,
-            ruleType: optionRules.ruleType,
-          })
-          .from(optionRules)
-          .innerJoin(
-            optionChoices,
-            eq(optionRules.sourceChoiceId, optionChoices.id),
-          )
-          .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-          .where(eq(optionGroups.modelId, id)),
-        tx
-          .select({ label: modelFeatures.label })
-          .from(modelFeatures)
-          .where(
-            and(
-              eq(modelFeatures.modelId, id),
-              eq(modelFeatures.isStandard, true),
-            ),
-          ),
-      ]);
+    const mediaRows = await tx
+      .select({ role: modelMedia.role, viewAngle: modelMedia.viewAngle })
+      .from(modelMedia)
+      .where(eq(modelMedia.modelId, id));
+    const groupRows = await tx
+      .select()
+      .from(optionGroups)
+      .where(
+        and(eq(optionGroups.modelId, id), ne(optionGroups.status, "archived")),
+      );
+    const choiceRows = await tx
+      .select({
+        id: optionChoices.id,
+        groupId: optionChoices.groupId,
+        name: optionChoices.name,
+        description: optionChoices.description,
+        priceDeltaMinor: optionChoices.priceDeltaMinor,
+        isStandard: optionChoices.isStandard,
+        status: optionChoices.status,
+      })
+      .from(optionChoices)
+      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+      .where(
+        and(eq(optionGroups.modelId, id), ne(optionGroups.status, "archived")),
+      );
+    const ruleRows = await tx
+      .select({
+        sourceChoiceId: optionRules.sourceChoiceId,
+        targetChoiceId: optionRules.targetChoiceId,
+        ruleType: optionRules.ruleType,
+      })
+      .from(optionRules)
+      .innerJoin(
+        optionChoices,
+        eq(optionRules.sourceChoiceId, optionChoices.id),
+      )
+      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+      .where(eq(optionGroups.modelId, id));
+    const featureRows = await tx
+      .select({ label: modelFeatures.label })
+      .from(modelFeatures)
+      .where(
+        and(eq(modelFeatures.modelId, id), eq(modelFeatures.isStandard, true)),
+      );
 
     const requires = new Map<string, string[]>();
     const excludes = new Map<string, string[]>();

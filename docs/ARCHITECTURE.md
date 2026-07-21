@@ -8,7 +8,7 @@
 4. Public UI receives minimal DTOs, never raw private records.
 5. Server Actions authenticate, validate, delegate, and return typed results.
 6. Prices and compatibility are recalculated on the server.
-7. Public catalogue data uses precise cache tags; admin/session content is uncached.
+7. Public catalogue data uses grouped cache tags; admin/session content is dynamic and uncached.
 8. shadcn/ui provides accessible primitives, while high-identity public components remain custom.
 
 ## Planned source boundaries
@@ -44,6 +44,9 @@ Directories are created when their first real module is introduced. Empty archit
   shared by server runtime and local database commands.
 - `src/db/client.ts` is marked `server-only`, owns runtime access to `DATABASE_URL`,
   and creates the pooled singleton lazily.
+- The serverless PostgreSQL pool is deliberately limited to one connection per
+  warm function. Related reads run sequentially, so the first failed statement
+  stops the workload instead of leaving more statements queued behind it.
 - `src/data/queries` filters publication state and projects safe public DTOs. A
   configured database error is surfaced rather than silently replaced by demo data.
 - `src/data/auth` verifies signed claims, the email allow-list, and the active
@@ -57,7 +60,9 @@ Directories are created when their first real module is introduced. Empty archit
   object if database association fails.
 - Phase 6 public routes read only from `src/data/queries/public-models.ts` and
   `public-accessories.ts`. These queries enforce publication state, project narrow
-  DTOs, cache for one hour, and carry catalogue/entity tags for admin invalidation.
+  DTOs, cache their data for one hour with `unstable_cache`, and carry grouped tags
+  for admin invalidation. The public route group is request-rendered; production
+  builds never enumerate dynamic slugs or require a live database.
 - `public-configurator.ts` reads the published configuration for page rendering.
   Snapshot writes deliberately reload the same records through an uncached mutation
   query before running the pure engine, so a stale browser cannot preserve an old
@@ -76,6 +81,9 @@ Directories are created when their first real module is introduced. Empty archit
 - `public-site-settings.ts` owns the cached public contact and SEO projection. A
   singleton settings mutation invalidates the shared tag so the layout, footer,
   contact page, and metadata converge without coupling those components to Drizzle.
+- The root layout is infrastructure-free. Database-backed metadata and dealer
+  structured data live only in the public layout, so Auth/database failures can
+  still reach a finite Atelier error or login page.
 - Persisted social URLs are filtered to supported HTTP(S) destinations again at the
   public projection boundary, so legacy or manually altered data cannot create an
   unsafe footer link.

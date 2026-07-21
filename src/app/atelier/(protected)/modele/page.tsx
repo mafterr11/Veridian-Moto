@@ -1,155 +1,98 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 
-import {
-  archiveModelAction,
-  publishModelAction,
-  updateModelAction,
-} from "@/app/atelier/(protected)/catalogue-actions";
+import { archiveModelAction } from "@/app/atelier/(protected)/catalogue-actions";
 import { AdminActionForm } from "@/components/admin/action-form";
 import { AdminDocumentLink } from "@/components/admin/admin-document-link";
-import { ModelConfigurationEditor } from "@/components/admin/model-configuration-editor";
-import { ModelFeatureEditor } from "@/components/admin/model-feature-editor";
-import { ModelForm } from "@/components/admin/model-form";
-import { ModelMediaEditor } from "@/components/admin/model-media-editor";
 import { AdminPageHeader, AdminSection } from "@/components/admin/page-header";
-import { AdminStatusBadge } from "@/components/admin/status-badge";
+import {
+  AdminEmptyState,
+  AdminStatusBadge,
+} from "@/components/admin/status-badge";
 import { buttonVariants } from "@/components/ui/button";
-import { getAdminModelEditor } from "@/data/queries/admin-catalogue";
+import { getAdminModelList } from "@/data/queries/admin-catalogue";
+import { formatPrice } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Editor model" };
+export const metadata: Metadata = { title: "Modele" };
 
-type Params = Promise<{ id: string }>;
-
-export default function EditModelPage({ params }: { params: Params }) {
-  return (
-    <Suspense fallback={<ModelEditorLoading />}>
-      <ModelEditor params={params} />
-    </Suspense>
-  );
-}
-
-async function ModelEditor({ params }: { params: Params }) {
-  const { id } = await params;
-  const workspace = await getAdminModelEditor(id);
-  if (!workspace) notFound();
-
-  const { model } = workspace;
-
+export default function AdminModelsPage() {
   return (
     <main className="px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
       <AdminPageHeader
-        eyebrow={`Catalog / ${model.categoryName}`}
-        title={model.name}
-        description="Orice modificare editorială readuce modelul în draft. Publicarea rulează validarea completă într-o tranzacție."
+        eyebrow="Catalog"
+        title="Modele"
+        description="Creează drafturi, completează media și configurația, apoi publică numai după validarea întregului model."
         actions={
-          <div className="flex flex-wrap gap-2">
-            <AdminDocumentLink
-              href="/atelier/modele"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              <ArrowLeft aria-hidden="true" /> Modele
-            </AdminDocumentLink>
-            {model.status === "published" && (
-              <AdminDocumentLink
-                href={`/modele/${model.slug}`}
-                target="_blank"
-                className={buttonVariants({ variant: "outline" })}
-              >
-                Preview <ExternalLink aria-hidden="true" />
-              </AdminDocumentLink>
-            )}
-          </div>
+          <AdminDocumentLink
+            href="/atelier/modele/nou"
+            className={buttonVariants()}
+          >
+            <Plus aria-hidden="true" /> Model nou
+          </AdminDocumentLink>
         }
       />
-
-      <div className="border-obsidian/15 mt-8 flex flex-col gap-4 border bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold">Stare curentă</span>
-            <AdminStatusBadge status={model.status} />
-          </div>
-          <p className="text-steel mt-1 text-xs">
-            Ultima actualizare: {model.updatedAt.toLocaleString("ro-RO")}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <AdminActionForm
-            action={publishModelAction.bind(null, model.id)}
-            submitLabel={
-              model.status === "published"
-                ? "Revalidează publicarea"
-                : "Validează și publică"
-            }
-          />
-          {model.status !== "archived" && (
-            <AdminActionForm
-              action={archiveModelAction.bind(null, model.id)}
-              submitLabel="Arhivează"
-              buttonVariant="destructive"
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="mt-8 grid gap-8">
-        <AdminSection
-          title="Identitate și specificații"
-          description="Salvarea acestei secțiuni păstrează toate celelalte relații și setează starea draft."
-        >
-          <ModelForm
-            action={updateModelAction}
-            categories={workspace.categories}
-            value={model}
-            submitLabel="Salvează modelul"
-          />
-        </AdminSection>
-
-        <AdminSection
-          title="Echipare standard"
-          description="Elementele standard apar în prezentarea publică și în rezumatul configuratorului."
-        >
-          <ModelFeatureEditor
-            modelId={model.id}
-            features={workspace.features}
-          />
-        </AdminSection>
-
-        <AdminSection
-          title="Media"
-          description="Publicarea cere câte o asociere card și hero. Fișierele noi sunt validate și normalizate înainte de Storage."
-        >
-          <ModelMediaEditor
-            modelId={model.id}
-            assigned={workspace.media}
-            library={workspace.mediaLibrary}
-          />
-        </AdminSection>
-
-        <AdminSection
-          title="Configurator"
-          description="Grupurile, alegerile implicite și regulile sunt validate împreună înainte ca modelul să poată deveni public."
-        >
-          <ModelConfigurationEditor
-            modelId={model.id}
-            groups={workspace.groups}
-            choices={workspace.choices}
-            rules={workspace.rules}
-            accessories={workspace.accessories}
-            mediaLibrary={workspace.mediaLibrary}
-          />
-        </AdminSection>
-      </div>
+      <ModelsTable />
     </main>
   );
 }
 
-function ModelEditorLoading() {
+async function ModelsTable() {
+  const models = await getAdminModelList();
+
   return (
-    <main className="px-5 py-12 sm:px-8 lg:px-10">
-      <p className="text-sm font-semibold">Se încarcă editorul modelului…</p>
-    </main>
+    <AdminSection
+      title="Gama administrată"
+      description={`${models.length} modele`}
+      className="mt-10"
+    >
+      {models.length === 0 ? (
+        <AdminEmptyState>
+          Nu există modele. Creează primul draft pentru a continua.
+        </AdminEmptyState>
+      ) : (
+        <div className="grid gap-3">
+          {models.map((model) => (
+            <article
+              key={model.id}
+              className="border-obsidian/15 grid gap-4 border p-4 md:grid-cols-[1fr_auto] md:items-center"
+            >
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-heading text-2xl font-bold uppercase">
+                    {model.name}
+                  </h2>
+                  <AdminStatusBadge status={model.status} />
+                  {model.configuratorEnabled && (
+                    <span className="border-obsidian/15 border px-2 py-1 text-[0.65rem] font-bold uppercase">
+                      Configurator
+                    </span>
+                  )}
+                </div>
+                <p className="text-steel mt-1 text-xs">
+                  {model.categoryName} · {model.modelYear} ·{" "}
+                  {formatPrice(model.basePriceMinor / 100)} ·{" "}
+                  {model.publicInventory} unități publice
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {model.status !== "archived" && (
+                  <AdminActionForm
+                    action={archiveModelAction.bind(null, model.id)}
+                    submitLabel="Arhivează"
+                    buttonVariant="destructive"
+                  />
+                )}
+                <AdminDocumentLink
+                  href={`/atelier/modele/${model.id}`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Editează <ArrowRight aria-hidden="true" />
+                </AdminDocumentLink>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </AdminSection>
   );
 }

@@ -4,12 +4,12 @@ import { getPublicArticleIndexEntries } from "@/data/queries/public-editorial";
 import { getPublicModelIndexEntries } from "@/data/queries/public-models";
 import { env } from "@/env";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = env.NEXT_PUBLIC_APP_URL;
-  const [models, articles] = await Promise.all([
-    getPublicModelIndexEntries(),
-    getPublicArticleIndexEntries(),
-  ]);
+  const models = await getPublicModelIndexEntries();
+  const articles = await getPublicArticleIndexEntries();
   const staticRoutes = [
     "",
     "/modele",

@@ -2,24 +2,16 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import {
   ArticleBody,
   formatArticleDate,
 } from "@/components/editorial/article-body";
-import {
-  getPublicArticle,
-  getPublicArticleSlugs,
-} from "@/data/queries/public-editorial";
+import { getPublicArticle } from "@/data/queries/public-editorial";
 import { env } from "@/env";
 
 type PageProps = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  return (await getPublicArticleSlugs()).map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -43,11 +35,7 @@ export async function generateMetadata({
 }
 
 export default function ArticlePage({ params }: PageProps) {
-  return (
-    <Suspense fallback={<ArticleLoading />}>
-      <ArticleContent params={params} />
-    </Suspense>
-  );
+  return <ArticleContent params={params} />;
 }
 
 async function ArticleContent({ params }: PageProps) {
@@ -106,15 +94,6 @@ async function ArticleContent({ params }: PageProps) {
         </div>
         <ArticleBody markdown={article.bodyMarkdown} />
       </article>
-    </main>
-  );
-}
-
-function ArticleLoading() {
-  return (
-    <main className="bg-porcelain min-h-svh animate-pulse px-5 py-20">
-      <div className="bg-obsidian/10 mx-auto h-44 max-w-5xl" />
-      <div className="bg-obsidian/5 mx-auto mt-10 aspect-[16/7] max-w-[1440px]" />
     </main>
   );
 }

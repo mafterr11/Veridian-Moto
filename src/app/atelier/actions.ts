@@ -74,31 +74,42 @@ export async function loginAction(
     return genericError;
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword(
-    parsed.data,
-  );
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword(
+      parsed.data,
+    );
 
-  if (signInError) {
-    return genericError;
-  }
+    if (signInError) {
+      return genericError;
+    }
 
-  const { data, error: claimsError } = await supabase.auth.getClaims();
-  const claims = claimsError ? null : readAdminClaims(data?.claims);
+    const { data, error: claimsError } = await supabase.auth.getClaims();
+    const claims = claimsError ? null : readAdminClaims(data?.claims);
 
-  if (!claims || !isAllowedAdminEmail(claims.email, env.ADMIN_EMAIL)) {
-    await supabase.auth.signOut();
-    return genericError;
-  }
+    if (!claims || !isAllowedAdminEmail(claims.email, env.ADMIN_EMAIL)) {
+      await supabase.auth.signOut();
+      return genericError;
+    }
 
-  const profile = await findActiveAdminProfile(claims.id);
+    const profile = await findActiveAdminProfile(claims.id);
 
-  if (!profile) {
-    await supabase.auth.signOut();
+    if (!profile) {
+      await supabase.auth.signOut();
+      return {
+        status: "configuration-error",
+        message:
+          "Contul este valid, dar profilul de administrator nu a fost provisionat. Rulează comanda db:admin.",
+      };
+    }
+  } catch (error) {
+    console.error("Atelier login dependency check failed.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
     return {
       status: "configuration-error",
       message:
-        "Contul este valid, dar profilul de administrator nu a fost provisionat. Rulează comanda db:admin.",
+        "Serviciul de autentificare sau baza de date nu răspunde momentan. Încearcă din nou după verificarea Supabase.",
     };
   }
 
@@ -106,9 +117,15 @@ export async function loginAction(
 }
 
 export async function logoutAction() {
-  if (isAdminInfrastructureConfigured()) {
-    const supabase = await createSupabaseServerClient();
-    await supabase.auth.signOut();
+  try {
+    if (isAdminInfrastructureConfigured()) {
+      const supabase = await createSupabaseServerClient();
+      await supabase.auth.signOut();
+    }
+  } catch (error) {
+    console.error("Atelier logout could not reach Supabase.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
   }
 
   redirect("/atelier/login");

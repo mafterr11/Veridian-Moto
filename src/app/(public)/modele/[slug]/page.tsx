@@ -7,20 +7,12 @@ import { ArrowRight, Check, Gauge, ImageIcon, Weight, Zap } from "lucide-react";
 import { AvailabilityBadge } from "@/components/catalogue/availability-badge";
 import { ModelCard } from "@/components/catalogue/model-card";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  getPublicModel,
-  getPublicModelIndexEntries,
-  getPublicModels,
-} from "@/data/queries/public-models";
+import { getPublicModel, getPublicModels } from "@/data/queries/public-models";
 import { env } from "@/env";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type PageProps = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  return (await getPublicModelIndexEntries()).map(({ slug }) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -46,10 +38,8 @@ export async function generateMetadata({
 
 export default async function ModelDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const [model, models] = await Promise.all([
-    getPublicModel(slug),
-    getPublicModels(),
-  ]);
+  const model = await getPublicModel(slug);
+  const models = await getPublicModels();
 
   if (!model) notFound();
 

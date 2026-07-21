@@ -73,19 +73,3 @@ export function AdminShell({
     </div>
   );
 }
-
-export function AdminShellLoading() {
-  return (
-    <main
-      className="bg-porcelain text-obsidian grid min-h-svh place-items-center px-5"
-      aria-label="Se verifică accesul"
-    >
-      <div className="text-center">
-        <div className="border-veridian mx-auto size-8 animate-spin rounded-full border-2 border-t-transparent" />
-        <p className="mt-4 text-sm font-semibold">
-          Se verifică accesul securizat…
-        </p>
-      </div>
-    </main>
-  );
-}

@@ -15,49 +15,47 @@ export async function getAdminEditorialWorkspace() {
   }
   await assertAdmin();
   const db = getDatabase();
-  const [categories, posts, mediaLibrary] = await Promise.all([
-    db
-      .select()
-      .from(discoverCategories)
-      .orderBy(asc(discoverCategories.sortOrder), asc(discoverCategories.name)),
-    db
-      .select({
-        id: discoverPosts.id,
-        categoryId: discoverPosts.categoryId,
-        categoryName: discoverCategories.name,
-        title: discoverPosts.title,
-        slug: discoverPosts.slug,
-        excerpt: discoverPosts.excerpt,
-        bodyMarkdown: discoverPosts.bodyMarkdown,
-        coverMediaId: discoverPosts.coverMediaId,
-        coverPath: mediaAssets.storagePath,
-        coverAlt: mediaAssets.altText,
-        featured: discoverPosts.featured,
-        status: discoverPosts.status,
-        publishedAt: discoverPosts.publishedAt,
-        seoTitle: discoverPosts.seoTitle,
-        seoDescription: discoverPosts.seoDescription,
-        updatedAt: discoverPosts.updatedAt,
-      })
-      .from(discoverPosts)
-      .innerJoin(
-        discoverCategories,
-        eq(discoverPosts.categoryId, discoverCategories.id),
-      )
-      .leftJoin(mediaAssets, eq(discoverPosts.coverMediaId, mediaAssets.id))
-      .orderBy(desc(discoverPosts.updatedAt)),
-    db
-      .select({
-        id: mediaAssets.id,
-        storagePath: mediaAssets.storagePath,
-        altText: mediaAssets.altText,
-        width: mediaAssets.width,
-        height: mediaAssets.height,
-      })
-      .from(mediaAssets)
-      .orderBy(desc(mediaAssets.createdAt))
-      .limit(150),
-  ]);
+  const categories = await db
+    .select()
+    .from(discoverCategories)
+    .orderBy(asc(discoverCategories.sortOrder), asc(discoverCategories.name));
+  const posts = await db
+    .select({
+      id: discoverPosts.id,
+      categoryId: discoverPosts.categoryId,
+      categoryName: discoverCategories.name,
+      title: discoverPosts.title,
+      slug: discoverPosts.slug,
+      excerpt: discoverPosts.excerpt,
+      bodyMarkdown: discoverPosts.bodyMarkdown,
+      coverMediaId: discoverPosts.coverMediaId,
+      coverPath: mediaAssets.storagePath,
+      coverAlt: mediaAssets.altText,
+      featured: discoverPosts.featured,
+      status: discoverPosts.status,
+      publishedAt: discoverPosts.publishedAt,
+      seoTitle: discoverPosts.seoTitle,
+      seoDescription: discoverPosts.seoDescription,
+      updatedAt: discoverPosts.updatedAt,
+    })
+    .from(discoverPosts)
+    .innerJoin(
+      discoverCategories,
+      eq(discoverPosts.categoryId, discoverCategories.id),
+    )
+    .leftJoin(mediaAssets, eq(discoverPosts.coverMediaId, mediaAssets.id))
+    .orderBy(desc(discoverPosts.updatedAt));
+  const mediaLibrary = await db
+    .select({
+      id: mediaAssets.id,
+      storagePath: mediaAssets.storagePath,
+      altText: mediaAssets.altText,
+      width: mediaAssets.width,
+      height: mediaAssets.height,
+    })
+    .from(mediaAssets)
+    .orderBy(desc(mediaAssets.createdAt))
+    .limit(150);
 
   return { categories, posts, mediaLibrary };
 }

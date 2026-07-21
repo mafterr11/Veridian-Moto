@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
 import {
   archiveAccessoryAction,
@@ -33,9 +32,7 @@ export default function AdminAccessoriesPage() {
         title="Accesorii"
         description="Administrează categoriile, prețurile, stocul intern și compatibilitatea cu modelele. Cantitățile interne nu părăsesc atelierul."
       />
-      <Suspense fallback={<p className="mt-10 text-sm">Se încarcă…</p>}>
-        <AccessoryWorkspace />
-      </Suspense>
+      <AccessoryWorkspace />
     </main>
   );
 }

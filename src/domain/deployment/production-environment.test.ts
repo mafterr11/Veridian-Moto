@@ -55,6 +55,33 @@ describe("production environment validation", () => {
     );
   });
 
+  it("rejects direct or cross-project database URLs for Vercel", () => {
+    const direct = validateProductionEnvironment({
+      ...validEnvironment,
+      DATABASE_URL:
+        "postgresql://postgres:password@db.project.supabase.co:5432/postgres",
+    });
+    const otherProject = validateProductionEnvironment({
+      ...validEnvironment,
+      DATABASE_URL:
+        "postgresql://postgres.other:password@region.pooler.supabase.com:6543/postgres",
+    });
+
+    expect(direct.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ variable: "DATABASE_URL" }),
+      ]),
+    );
+    expect(otherProject.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          variable: "DATABASE_URL",
+          message: expect.stringContaining("configured Supabase project"),
+        }),
+      ]),
+    );
+  });
+
   it("warns when provisioning credentials are present", () => {
     const report = validateProductionEnvironment({
       ...validEnvironment,

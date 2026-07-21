@@ -1,7 +1,7 @@
 import "server-only";
 
 import { and, asc, eq } from "drizzle-orm";
-import { cacheLife, cacheTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import {
@@ -14,7 +14,7 @@ import {
   optionGroups,
   optionRules,
 } from "@/db/schema";
-import { CACHE_TAGS, modelCacheTag } from "@/data/cache-tags";
+import { CACHE_TAGS } from "@/data/cache-tags";
 import { getPublicModels } from "@/data/queries/public-models";
 import { getDemoConfigurator } from "@/domain/configurator/demo-catalogues";
 import type { ConfiguratorCatalogue } from "@/domain/configurator/types";
@@ -32,14 +32,8 @@ export type PublicConfiguratorDTO = {
   };
 };
 
-export async function getConfigurableModels() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels);
-
+async function loadConfigurableModels() {
   const models = await getPublicModels();
-  if (!isDatabaseConfigured()) return models;
-
   const enabled = await getDatabase()
     .select({ slug: motorcycleModels.slug })
     .from(motorcycleModels)
@@ -55,37 +49,26 @@ export async function getConfigurableModels() {
   return models.filter((model) => slugs.has(model.slug));
 }
 
-export async function getPublicConfigurator(
-  slug?: string,
+const getCachedConfigurableModels = unstable_cache(
+  loadConfigurableModels,
+  ["public-configurable-models"],
+  {
+    revalidate: 3_600,
+    tags: [CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels],
+  },
+);
+
+export async function getConfigurableModels() {
+  if (!isDatabaseConfigured()) return getPublicModels();
+  return getCachedConfigurableModels();
+}
+
+async function loadPublicConfigurator(
+  slug: string,
 ): Promise<PublicConfiguratorDTO | undefined> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels);
-
-  if (!slug) return undefined;
-
-  cacheTag(modelCacheTag(slug));
-
   const publicModels = await getPublicModels();
   const publicModel = publicModels.find((model) => model.slug === slug);
   if (!publicModel) return undefined;
-
-  if (!isDatabaseConfigured()) {
-    const catalogue = getDemoConfigurator(slug);
-    if (!catalogue) return undefined;
-    return {
-      catalogue,
-      model: {
-        slug,
-        category: publicModel.category,
-        powerHp: publicModel.powerHp,
-        torqueNm: publicModel.torqueNm,
-        wetWeightKg: publicModel.wetWeightKg,
-        image: publicModel.image,
-        imageAlt: publicModel.imageAlt,
-      },
-    };
-  }
 
   const db = getDatabase();
   const [model] = await db
@@ -112,76 +95,71 @@ export async function getPublicConfigurator(
     .limit(1);
   if (!model) return undefined;
 
-  const [groups, choices, rules, features, media] = await Promise.all([
-    db
-      .select()
-      .from(optionGroups)
-      .where(
-        and(
-          eq(optionGroups.modelId, model.id),
-          eq(optionGroups.status, "published"),
-        ),
-      )
-      .orderBy(asc(optionGroups.sortOrder)),
-    db
-      .select({
-        id: optionChoices.id,
-        groupId: optionChoices.groupId,
-        code: optionChoices.code,
-        name: optionChoices.name,
-        description: optionChoices.description,
-        priceDeltaMinor: optionChoices.priceDeltaMinor,
-        swatchHex: optionChoices.swatchHex,
-        isStandard: optionChoices.isStandard,
-        image: mediaAssets.storagePath,
-      })
-      .from(optionChoices)
-      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-      .leftJoin(mediaAssets, eq(optionChoices.mediaId, mediaAssets.id))
-      .where(
-        and(
-          eq(optionGroups.modelId, model.id),
-          eq(optionGroups.status, "published"),
-          eq(optionChoices.status, "published"),
-        ),
-      )
-      .orderBy(asc(optionChoices.sortOrder)),
-    db
-      .select({
-        sourceChoiceId: optionRules.sourceChoiceId,
-        targetChoiceId: optionRules.targetChoiceId,
-        ruleType: optionRules.ruleType,
-      })
-      .from(optionRules)
-      .innerJoin(
-        optionChoices,
-        eq(optionRules.sourceChoiceId, optionChoices.id),
-      )
-      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-      .where(eq(optionGroups.modelId, model.id)),
-    db
-      .select({ label: modelFeatures.label, value: modelFeatures.value })
-      .from(modelFeatures)
-      .where(
-        and(
-          eq(modelFeatures.modelId, model.id),
-          eq(modelFeatures.isStandard, true),
-        ),
-      )
-      .orderBy(asc(modelFeatures.sortOrder)),
-    db
-      .select({
-        path: mediaAssets.storagePath,
-        alt: mediaAssets.altText,
-        role: modelMedia.role,
-        viewAngle: modelMedia.viewAngle,
-        sortOrder: modelMedia.sortOrder,
-      })
-      .from(modelMedia)
-      .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
-      .where(eq(modelMedia.modelId, model.id))
-      .orderBy(asc(modelMedia.sortOrder)),
-  ]);
+  const groups = await db
+    .select()
+    .from(optionGroups)
+    .where(
+      and(
+        eq(optionGroups.modelId, model.id),
+        eq(optionGroups.status, "published"),
+      ),
+    )
+    .orderBy(asc(optionGroups.sortOrder));
+  const choices = await db
+    .select({
+      id: optionChoices.id,
+      groupId: optionChoices.groupId,
+      code: optionChoices.code,
+      name: optionChoices.name,
+      description: optionChoices.description,
+      priceDeltaMinor: optionChoices.priceDeltaMinor,
+      swatchHex: optionChoices.swatchHex,
+      isStandard: optionChoices.isStandard,
+      image: mediaAssets.storagePath,
+    })
+    .from(optionChoices)
+    .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+    .leftJoin(mediaAssets, eq(optionChoices.mediaId, mediaAssets.id))
+    .where(
+      and(
+        eq(optionGroups.modelId, model.id),
+        eq(optionGroups.status, "published"),
+        eq(optionChoices.status, "published"),
+      ),
+    )
+    .orderBy(asc(optionChoices.sortOrder));
+  const rules = await db
+    .select({
+      sourceChoiceId: optionRules.sourceChoiceId,
+      targetChoiceId: optionRules.targetChoiceId,
+      ruleType: optionRules.ruleType,
+    })
+    .from(optionRules)
+    .innerJoin(optionChoices, eq(optionRules.sourceChoiceId, optionChoices.id))
+    .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+    .where(eq(optionGroups.modelId, model.id));
+  const features = await db
+    .select({ label: modelFeatures.label, value: modelFeatures.value })
+    .from(modelFeatures)
+    .where(
+      and(
+        eq(modelFeatures.modelId, model.id),
+        eq(modelFeatures.isStandard, true),
+      ),
+    )
+    .orderBy(asc(modelFeatures.sortOrder));
+  const media = await db
+    .select({
+      path: mediaAssets.storagePath,
+      alt: mediaAssets.altText,
+      role: modelMedia.role,
+      viewAngle: modelMedia.viewAngle,
+      sortOrder: modelMedia.sortOrder,
+    })
+    .from(modelMedia)
+    .innerJoin(mediaAssets, eq(modelMedia.mediaId, mediaAssets.id))
+    .where(eq(modelMedia.modelId, model.id))
+    .orderBy(asc(modelMedia.sortOrder));
 
   const choiceIds = new Set(choices.map((choice) => choice.id));
   const requires = new Map<string, string[]>();
@@ -253,4 +231,41 @@ export async function getPublicConfigurator(
       imageAlt: hero?.alt ?? publicModel.imageAlt,
     },
   };
+}
+
+const getCachedPublicConfigurator = unstable_cache(
+  loadPublicConfigurator,
+  ["public-configurator"],
+  {
+    revalidate: 3_600,
+    tags: [CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels],
+  },
+);
+
+export async function getPublicConfigurator(
+  slug?: string,
+): Promise<PublicConfiguratorDTO | undefined> {
+  if (!slug) return undefined;
+
+  if (!isDatabaseConfigured()) {
+    const publicModels = await getPublicModels();
+    const catalogue = getDemoConfigurator(slug);
+    const publicModel = publicModels.find((model) => model.slug === slug);
+    if (!catalogue || !publicModel) return undefined;
+
+    return {
+      catalogue,
+      model: {
+        slug,
+        category: publicModel.category,
+        powerHp: publicModel.powerHp,
+        torqueNm: publicModel.torqueNm,
+        wetWeightKg: publicModel.wetWeightKg,
+        image: publicModel.image,
+        imageAlt: publicModel.imageAlt,
+      },
+    };
+  }
+
+  return getCachedPublicConfigurator(slug);
 }

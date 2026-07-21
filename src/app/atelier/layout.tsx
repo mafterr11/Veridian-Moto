@@ -1,29 +1,21 @@
-import { Suspense } from "react";
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
-import { AdminShell, AdminShellLoading } from "@/components/admin/admin-shell";
-import { getAdminAuthState } from "@/data/auth/admin-session";
+export const dynamic = "force-dynamic";
 
-export default function ProtectedAtelierLayout({
+export const metadata: Metadata = {
+  title: {
+    default: "Atelier",
+    template: "%s | VERIDIAN Atelier",
+  },
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+  },
+};
+
+export default function AtelierLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <Suspense fallback={<AdminShellLoading />}>
-      <AuthorizedAdminShell>{children}</AuthorizedAdminShell>
-    </Suspense>
-  );
-}
-
-async function AuthorizedAdminShell({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const auth = await getAdminAuthState();
-
-  if (auth.status !== "authenticated") {
-    const reason =
-      auth.status === "missing-configuration" ? "configurare" : "autentificare";
-    redirect(`/atelier/login?motiv=${reason}`);
-  }
-
-  return <AdminShell identity={auth.identity}>{children}</AdminShell>;
+  return children;
 }

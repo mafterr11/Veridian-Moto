@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -51,9 +50,7 @@ export default function AccessoriesPage({
         title="Mai pregătit. Nu mai încărcat."
         description="Protecție, ergonomie și bagaje dezvoltate pentru modelele VERIDIAN. Fiecare accesoriu afișează clar unde se potrivește."
       />
-      <Suspense fallback={<AccessoriesLoading />}>
-        <AccessoriesCatalogue searchParams={searchParams} />
-      </Suspense>
+      <AccessoriesCatalogue searchParams={searchParams} />
     </main>
   );
 }
@@ -232,24 +229,6 @@ async function AccessoriesCatalogue({
           <Link href="/contact" className={buttonVariants({ size: "lg" })}>
             Întreabă un specialist
           </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function AccessoriesLoading() {
-  return (
-    <section className="bg-porcelain py-20" aria-label="Se încarcă accesoriile">
-      <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
-        <div className="bg-obsidian/10 h-24 animate-pulse" />
-        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div
-              key={index}
-              className="bg-obsidian/10 h-[28rem] animate-pulse"
-            />
-          ))}
         </div>
       </div>
     </section>

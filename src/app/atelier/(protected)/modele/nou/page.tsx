@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import { createModelAction } from "@/app/atelier/(protected)/catalogue-actions";
@@ -27,9 +26,7 @@ export default function NewModelPage() {
           </AdminDocumentLink>
         }
       />
-      <Suspense fallback={<p className="mt-10 text-sm">Se încarcă…</p>}>
-        <NewModelForm />
-      </Suspense>
+      <NewModelForm />
     </main>
   );
 }

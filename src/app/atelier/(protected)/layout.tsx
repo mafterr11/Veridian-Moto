@@ -1,23 +1,20 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { AdminShell, AdminShellLoading } from "@/components/admin/admin-shell";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { getAdminAuthState } from "@/data/auth/admin-session";
 
-export default function ProtectedAtelierLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <Suspense fallback={<AdminShellLoading />}>
-      <AuthorizedAdminShell>{children}</AuthorizedAdminShell>
-    </Suspense>
-  );
-}
-
-async function AuthorizedAdminShell({
+export default async function ProtectedAtelierLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const auth = await getAdminAuthState();
+
+  if (auth.status === "service-unavailable") {
+    redirect("/atelier/indisponibil");
+  }
+
+  if (auth.status === "unprovisioned" || auth.status === "forbidden") {
+    redirect(`/atelier/acces-refuzat?motiv=${auth.status}`);
+  }
 
   if (auth.status !== "authenticated") {
     const reason =

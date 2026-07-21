@@ -5,7 +5,9 @@
 VERIDIAN uses Supabase PostgreSQL, Drizzle ORM, and checked-in SQL migrations.
 The runtime connection should be the Supabase **transaction pooler** URL. The
 Postgres.js driver is configured with `prepare: false`, which is required for that
-pooling mode.
+pooling mode. It also enforces TLS, skips the unnecessary custom-type discovery
+round trip, keeps one short-lived connection per warm function, and applies finite
+connect, statement, transaction-idle, and lock timeouts.
 
 Migration tooling should use a separate direct PostgreSQL connection through
 `MIGRATION_DATABASE_URL`. Drizzle falls back to `DATABASE_URL` for local/test
@@ -23,11 +25,13 @@ in `drizzle/`; migrations are reviewed and committed before they are applied.
 2. Copy `.env.example` to `.env.local`.
 3. Add the project URL, publishable key, transaction-pooler `DATABASE_URL`, direct
    `MIGRATION_DATABASE_URL`, and the intended administrator email.
-4. Apply the schema with `pnpm db:migrate`.
-5. Load the fictional catalogue with `pnpm db:seed`.
-6. Create the matching email/password user in Supabase Authentication. Keep public
+4. Verify the runtime connection with `pnpm db:doctor`. It performs read-only
+   connectivity, schema, and lock-wait checks without printing credentials.
+5. Apply the schema with `pnpm db:migrate`.
+6. Load the fictional catalogue with `pnpm db:seed`.
+7. Create the matching email/password user in Supabase Authentication. Keep public
    sign-up disabled.
-7. Add the service-role key locally, run `pnpm db:admin`, then remove that key from
+8. Add the service-role key locally, run `pnpm db:admin`, then remove that key from
    any environment that does not need administrative provisioning.
 
 The commands are idempotent where practical: catalogue records are upserted by

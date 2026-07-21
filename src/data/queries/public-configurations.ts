@@ -1,7 +1,7 @@
 import "server-only";
 
 import { and, eq } from "drizzle-orm";
-import { cacheLife, cacheTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import {
@@ -11,17 +11,9 @@ import {
   optionChoices,
   optionGroups,
 } from "@/db/schema";
-import { modelCacheTag } from "@/data/cache-tags";
+import { CACHE_TAGS } from "@/data/cache-tags";
 
-export async function getPublicConfiguration(reference?: string) {
-  "use cache";
-  cacheLife("hours");
-
-  if (!reference) return undefined;
-
-  cacheTag(`public:configuration:${reference}`);
-
-  if (!isDatabaseConfigured()) return undefined;
+async function loadPublicConfiguration(reference: string) {
   const db = getDatabase();
   const [snapshot] = await db
     .select({
@@ -39,7 +31,6 @@ export async function getPublicConfiguration(reference?: string) {
     .limit(1);
   if (!snapshot) return undefined;
 
-  cacheTag(modelCacheTag(snapshot.modelIdentity.slug));
   const currentlyPublished = snapshot.modelId
     ? await db
         .select({
@@ -83,4 +74,15 @@ export async function getPublicConfiguration(reference?: string) {
       ),
     })),
   };
+}
+
+const getCachedPublicConfiguration = unstable_cache(
+  loadPublicConfiguration,
+  ["public-configuration"],
+  { revalidate: 3_600, tags: [CACHE_TAGS.publicModels] },
+);
+
+export async function getPublicConfiguration(reference?: string) {
+  if (!reference || !isDatabaseConfigured()) return undefined;
+  return getCachedPublicConfiguration(reference);
 }

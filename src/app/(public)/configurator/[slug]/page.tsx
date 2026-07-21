@@ -2,16 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ConfiguratorExperience } from "@/components/configurator/configurator-experience";
-import {
-  getConfigurableModels,
-  getPublicConfigurator,
-} from "@/data/queries/public-configurator";
+import { getPublicConfigurator } from "@/data/queries/public-configurator";
 
 type PageProps = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  return (await getConfigurableModels()).map((model) => ({ slug: model.slug }));
-}
 
 export async function generateMetadata({
   params,

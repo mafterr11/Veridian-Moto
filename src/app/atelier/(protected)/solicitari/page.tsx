@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Mail, MessageSquareText, Phone } from "lucide-react";
 
 import { updateInquiryAction } from "@/app/atelier/(protected)/solicitari/actions";
@@ -42,9 +41,7 @@ export default function AdminInquiriesPage({
         title="Solicitări"
         description="Inbox unic pentru mesaje generale și cereri de ofertă cu configurația imuabilă atașată."
       />
-      <Suspense fallback={<p className="mt-10 text-sm">Se încarcă…</p>}>
-        <InquiryWorkspace searchParams={searchParams} />
-      </Suspense>
+      <InquiryWorkspace searchParams={searchParams} />
     </main>
   );
 }
@@ -184,6 +181,7 @@ async function InquiryWorkspace({
                         <AdminDocumentLink
                           href={`/configuratie/${row.configurationReference}`}
                           target="_blank"
+                          rel="noreferrer"
                           className="text-veridian mt-4 inline-flex text-sm font-bold"
                         >
                           Deschide rezumatul public

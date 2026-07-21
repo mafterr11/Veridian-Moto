@@ -28,10 +28,10 @@ The GitHub Actions quality workflow runs the same static/unit/build gate, the
 production dependency audit, and the database-free Playwright suite on `main` and
 pull requests.
 
-The repository-side verification completed on 21 July 2026 with 72 Vitest tests
-across 26 files, a successful 53-route production build, 14 passing public
-Playwright checks, one intentionally skipped database-dependent journey, a passing
-local deployment smoke test, and no known production dependency vulnerabilities.
+The final repair verification completed on 21 July 2026 with 90 Vitest tests across
+29 files, a successful production build, and a passing 24-route local production
+HTTP matrix. The public Playwright suite remains part of GitHub Actions (with one
+database-dependent journey intentionally skipped when credentials are absent).
 
 The production script deliberately runs `next build --webpack`. The private
 Atelier also uses normal document navigation for its internal links. Together,
@@ -62,7 +62,9 @@ application.
 
 `pnpm env:check:production` validates the current `.env.local` without printing
 secret values. It also warns when provisioning-only credentials are present so they
-are not copied into Vercel.
+are not copied into Vercel. It rejects direct, session-pooler, and cross-project
+database URLs: the Vercel runtime URL must match the configured Supabase project and
+use transaction mode on port 6543.
 
 ## One-time Supabase setup
 
@@ -73,29 +75,36 @@ are not copied into Vercel.
      machine. If that machine cannot reach the IPv6 direct endpoint, use the
      supported session-pooler alternative for migration tooling.
 3. Copy `.env.example` to `.env.local` and add the setup values.
-4. Apply all checked-in migrations, including Storage/RLS policy migrations:
+4. Verify the runtime URL and current pool/database health:
+
+   ```bash
+   pnpm env:check:production
+   pnpm db:doctor
+   ```
+
+5. Apply all checked-in migrations, including Storage/RLS policy migrations:
 
    ```bash
    pnpm db:migrate
    ```
 
-5. Seed the fictional catalogue and editorial content:
+6. Seed the fictional catalogue and editorial content:
 
    ```bash
    pnpm db:seed
    ```
 
-6. Disable public Auth sign-up and create one email/password user in the Supabase
+7. Disable public Auth sign-up and create one email/password user in the Supabase
    Authentication dashboard. Use the exact `ADMIN_EMAIL` value.
-7. Add `SUPABASE_SERVICE_ROLE_KEY` only to `.env.local`, run:
+8. Add `SUPABASE_SERVICE_ROLE_KEY` only to `.env.local`, run:
 
    ```bash
    pnpm db:admin
    ```
 
-8. Remove the service-role value when provisioning has succeeded.
-9. Set the Supabase Auth site URL to the canonical production origin. Keep any
-   redirect allow-list limited to origins actually used by the project.
+9. Remove the service-role value when provisioning has succeeded.
+10. Set the Supabase Auth site URL to the canonical production origin. Keep any
+    redirect allow-list limited to origins actually used by the project.
 
 The seed and admin commands are idempotent where practical. They can be rerun after
 a migration without overwriting administrator-authored site settings.
@@ -121,9 +130,15 @@ deployment must not leave schema changes half-coordinated with an old release.
 
 The PostgreSQL client is intentionally limited to one connection per warm
 serverless function instance. Connections close after a short idle period, and
-connect/query/lock timeouts prevent a failed Supabase dependency from leaving an
-Atelier Suspense boundary loading indefinitely. Raising the per-instance pool size
-multiplies the total connection demand across concurrent Vercel instances.
+connect/query/lock timeouts bound a failed Supabase dependency. Multi-query
+workspaces read sequentially and stop at the first failure, so statements cannot
+accumulate behind the one-connection pool. Atelier data/auth work is not wrapped in
+a streamed loading boundary: a database failure reaches the explicit unavailable
+state instead of leaving a 200 response open until Vercel's function timeout.
+
+Public data uses a one-hour `unstable_cache`; public and Atelier routes remain
+request-rendered. Cache Components and build-time dynamic-slug enumeration are
+intentionally disabled, so `next build` never requires a live production database.
 
 ## Release order
 
@@ -132,17 +147,19 @@ For each schema-changing release:
 1. Review the generated migration and create a database backup/export appropriate
    to the Supabase plan.
 2. Run `pnpm release:check` against the exact source to be released.
-3. Apply backward-compatible migrations from the trusted setup environment with
+3. Run `pnpm db:doctor`; do not continue while the pooler is unreachable or reports
+   lock waits.
+4. Apply backward-compatible migrations from the trusted setup environment with
    `pnpm db:migrate`.
-4. Run `pnpm db:seed` only when the release intentionally adds seed content.
-5. Deploy the application.
-6. Run the automated smoke checks:
+5. Run `pnpm db:seed` only when the release intentionally adds seed content.
+6. Deploy the application.
+7. Run the automated smoke checks:
 
    ```bash
    pnpm smoke:production -- https://your-production-origin.example
    ```
 
-7. Complete the authenticated manual checks below.
+8. Complete the authenticated manual checks below.
 
 Schema changes should use expand/migrate/contract sequencing when an old and new
 deployment may overlap. Never edit or delete an already-applied migration.
@@ -184,8 +201,8 @@ Manual checks still required:
 - Rotate a leaked secret in the provider first, update the affected Vercel variable,
   and redeploy. Environment changes do not modify already-created deployments.
 
-If an Atelier page ever remains on `Se încarcă…`, verify all of the following on
-the exact production deployment:
+If Atelier reports an unavailable database, verify all of the following on the
+exact production deployment:
 
 1. the build log identifies `Next.js ... (webpack)`;
 2. the deployment contains the current lockfile and `package.json` rather than an
@@ -193,8 +210,14 @@ the exact production deployment:
 3. one sidebar click produces one document request, not a burst of RSC/prefetch
    requests;
 4. `DATABASE_URL` is the Supabase transaction-pooler URL on port 6543;
-5. Supabase database logs show neither exhausted connections nor a statement
-   running beyond the configured 15-second timeout.
+5. `pnpm db:doctor` succeeds from the trusted machine;
+6. Supabase database logs show neither exhausted connections nor a statement
+   waiting on a lock beyond the configured 15-second timeout.
+
+Do not delete and recreate the Vercel project for an application or database
+failure. Correct the source/environment, create a fresh deployment, and run the
+smoke check. Recreating the project changes domains and configuration but does not
+repair a PostgreSQL lock, an incorrect pooler URL, or an old Git commit.
 
 ## Handoff acceptance
 

@@ -35,6 +35,14 @@ function isUrlWithProtocol(value: string, protocols: readonly string[]) {
   }
 }
 
+function parseUrl(value: string) {
+  try {
+    return new URL(value);
+  } catch {
+    return undefined;
+  }
+}
+
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
@@ -78,6 +86,42 @@ export function validateProductionEnvironment(
     errors.push({
       variable: "DATABASE_URL",
       message: "must be a PostgreSQL connection URL",
+    });
+  }
+
+  const parsedDatabaseUrl = databaseUrl ? parseUrl(databaseUrl) : undefined;
+  if (
+    parsedDatabaseUrl &&
+    ["postgres:", "postgresql:"].includes(parsedDatabaseUrl.protocol)
+  ) {
+    if (parsedDatabaseUrl.port !== "6543") {
+      errors.push({
+        variable: "DATABASE_URL",
+        message:
+          "must use the Supabase transaction pooler on port 6543 in Vercel",
+      });
+    }
+    if (!parsedDatabaseUrl.hostname.endsWith(".pooler.supabase.com")) {
+      errors.push({
+        variable: "DATABASE_URL",
+        message: "must use a Supabase pooler hostname",
+      });
+    }
+  }
+
+  const parsedSupabaseUrl = supabaseUrl ? parseUrl(supabaseUrl) : undefined;
+  const projectReference = parsedSupabaseUrl?.hostname.endsWith(".supabase.co")
+    ? parsedSupabaseUrl.hostname.slice(0, -".supabase.co".length)
+    : undefined;
+  if (
+    parsedDatabaseUrl &&
+    projectReference &&
+    parsedDatabaseUrl.username !== `postgres.${projectReference}`
+  ) {
+    errors.push({
+      variable: "DATABASE_URL",
+      message:
+        "must use the transaction-pooler username for the configured Supabase project",
     });
   }
 

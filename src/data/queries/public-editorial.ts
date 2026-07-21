@@ -1,11 +1,11 @@
 import "server-only";
 
 import { and, asc, desc, eq, lte } from "drizzle-orm";
-import { cacheLife, cacheTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import { discoverCategories, discoverPosts, mediaAssets } from "@/db/schema";
-import { CACHE_TAGS, discoverPostCacheTag } from "@/data/cache-tags";
+import { CACHE_TAGS } from "@/data/cache-tags";
 import { articles, getDemoArticle } from "@/data/editorial";
 
 export type PublicArticleSummary = {
@@ -43,14 +43,7 @@ function demoSummary(article: (typeof articles)[number]): PublicArticleSummary {
   };
 }
 
-export async function getPublicArticles(): Promise<
-  readonly PublicArticleSummary[]
-> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicDiscover);
-
-  if (!isDatabaseConfigured()) return articles.map(demoSummary);
+async function loadPublicArticles(): Promise<readonly PublicArticleSummary[]> {
   const rows = await getDatabase()
     .select({
       slug: discoverPosts.slug,
@@ -83,12 +76,23 @@ export async function getPublicArticles(): Promise<
   );
 }
 
-export async function getPublicDiscoverCategories() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicDiscover);
+const getCachedPublicArticles = unstable_cache(
+  loadPublicArticles,
+  ["public-articles"],
+  { revalidate: 3_600, tags: [CACHE_TAGS.publicDiscover] },
+);
 
-  const publicArticles = await getPublicArticles();
+export async function getPublicArticles(): Promise<
+  readonly PublicArticleSummary[]
+> {
+  if (!isDatabaseConfigured()) return articles.map(demoSummary);
+  return getCachedPublicArticles();
+}
+
+export async function getPublicDiscoverCategories(
+  input?: readonly PublicArticleSummary[],
+) {
+  const publicArticles = input ?? (await getPublicArticles());
   const categoryMap = new Map<
     string,
     { name: string; slug: string; articleCount: number }
@@ -106,31 +110,9 @@ export async function getPublicDiscoverCategories() {
   );
 }
 
-export async function getPublicArticle(
-  slug?: string,
+async function loadPublicArticle(
+  slug: string,
 ): Promise<PublicArticleDetail | undefined> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicDiscover);
-
-  // Cache Components can prerender the generic dynamic route before a concrete
-  // parameter exists. Never pass that temporary undefined value to Drizzle.
-  if (!slug) return undefined;
-
-  cacheTag(discoverPostCacheTag(slug));
-
-  if (!isDatabaseConfigured()) {
-    const article = getDemoArticle(slug);
-    return article
-      ? {
-          ...demoSummary(article),
-          bodyMarkdown: article.bodyMarkdown,
-          seoTitle: article.seoTitle,
-          seoDescription: article.seoDescription,
-        }
-      : undefined;
-  }
-
   const [row] = await getDatabase()
     .select({
       slug: discoverPosts.slug,
@@ -171,32 +153,66 @@ export async function getPublicArticle(
   };
 }
 
+const getCachedPublicArticle = unstable_cache(
+  loadPublicArticle,
+  ["public-article"],
+  { revalidate: 3_600, tags: [CACHE_TAGS.publicDiscover] },
+);
+
+export async function getPublicArticle(
+  slug?: string,
+): Promise<PublicArticleDetail | undefined> {
+  if (!slug) return undefined;
+
+  if (!isDatabaseConfigured()) {
+    const article = getDemoArticle(slug);
+    return article
+      ? {
+          ...demoSummary(article),
+          bodyMarkdown: article.bodyMarkdown,
+          seoTitle: article.seoTitle,
+          seoDescription: article.seoDescription,
+        }
+      : undefined;
+  }
+
+  return getCachedPublicArticle(slug);
+}
+
 export async function getPublicArticleSlugs() {
   return (await getPublicArticleIndexEntries()).map(({ slug }) => slug);
 }
 
-export async function getPublicArticleIndexEntries() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicDiscover);
+const getCachedPublicArticleIndexEntries = unstable_cache(
+  async () => {
+    return getDatabase()
+      .select({
+        slug: discoverPosts.slug,
+        updatedAt: discoverPosts.updatedAt,
+      })
+      .from(discoverPosts)
+      .where(
+        and(
+          eq(discoverPosts.status, "published"),
+          lte(discoverPosts.publishedAt, new Date()),
+        ),
+      )
+      .orderBy(asc(discoverPosts.slug));
+  },
+  ["public-article-index"],
+  {
+    revalidate: 3_600,
+    tags: [CACHE_TAGS.publicDiscover],
+  },
+);
 
+export async function getPublicArticleIndexEntries() {
   if (!isDatabaseConfigured()) {
     return articles.map(({ slug, publishedAt }) => ({
       slug,
       updatedAt: new Date(publishedAt),
     }));
   }
-  return getDatabase()
-    .select({
-      slug: discoverPosts.slug,
-      updatedAt: discoverPosts.updatedAt,
-    })
-    .from(discoverPosts)
-    .where(
-      and(
-        eq(discoverPosts.status, "published"),
-        lte(discoverPosts.publishedAt, new Date()),
-      ),
-    )
-    .orderBy(asc(discoverPosts.slug));
+
+  return getCachedPublicArticleIndexEntries();
 }

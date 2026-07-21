@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
 import { saveSiteSettingsAction } from "@/app/atelier/(protected)/setari/actions";
 import { AdminActionForm } from "@/components/admin/action-form";
@@ -20,9 +19,7 @@ export default function AdminSettingsPage() {
         title="Setări"
         description="Actualizează contactul, programul, rețelele sociale și valorile SEO implicite fără modificări în cod."
       />
-      <Suspense fallback={<p className="mt-10 text-sm">Se încarcă…</p>}>
-        <SettingsWorkspace />
-      </Suspense>
+      <SettingsWorkspace />
     </main>
   );
 }

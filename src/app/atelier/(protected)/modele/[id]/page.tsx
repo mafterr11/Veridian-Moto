@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import {
@@ -24,11 +23,7 @@ export const metadata: Metadata = { title: "Editor model" };
 type Params = Promise<{ id: string }>;
 
 export default function EditModelPage({ params }: { params: Params }) {
-  return (
-    <Suspense fallback={<ModelEditorLoading />}>
-      <ModelEditor params={params} />
-    </Suspense>
-  );
+  return <ModelEditor params={params} />;
 }
 
 async function ModelEditor({ params }: { params: Params }) {
@@ -56,6 +51,7 @@ async function ModelEditor({ params }: { params: Params }) {
               <AdminDocumentLink
                 href={`/modele/${model.slug}`}
                 target="_blank"
+                rel="noreferrer"
                 className={buttonVariants({ variant: "outline" })}
               >
                 Preview <ExternalLink aria-hidden="true" />
@@ -142,14 +138,6 @@ async function ModelEditor({ params }: { params: Params }) {
           />
         </AdminSection>
       </div>
-    </main>
-  );
-}
-
-function ModelEditorLoading() {
-  return (
-    <main className="px-5 py-12 sm:px-8 lg:px-10">
-      <p className="text-sm font-semibold">Se încarcă editorul modelului…</p>
     </main>
   );
 }

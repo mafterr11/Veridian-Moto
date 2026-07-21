@@ -52,8 +52,11 @@ bypass RLS and therefore belong only in controlled server or provisioning contex
 - Missing Supabase, database, or allow-list configuration: login explains setup and
   protected routes redirect there.
 - Missing/expired claims: redirect to login.
-- Wrong email or inactive/missing profile: deny access.
-- Database or Auth outage: do not fall back to an open admin experience.
+- Wrong email or inactive/missing profile: deny access on a finite status page,
+  with an explicit sign-out action and no redirect loop.
+- Database outage: redirect the already authenticated administrator to
+  `/atelier/indisponibil`; Auth outages fail closed at login. Neither condition
+  renders an open admin experience or an indefinitely streamed loader.
 
 Authentication errors shown before successful sign-in are generic to avoid exposing
 which addresses exist. An authenticated allow-listed user may receive the actionable

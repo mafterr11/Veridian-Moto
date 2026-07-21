@@ -86,7 +86,9 @@ export async function updateSupabaseSession(request: NextRequest) {
     const { data, error } = await supabase.auth.getClaims();
     claims = error ? null : readAdminClaims(data?.claims);
   } catch (error) {
-    console.error("Atelier proxy could not verify Supabase claims.", error);
+    console.error("Atelier proxy could not verify Supabase claims.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
   }
   const isAllowed = Boolean(
     claims && isAllowedAdminEmail(claims.email, adminEmail),

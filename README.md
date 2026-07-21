@@ -88,6 +88,7 @@ tests are needed.
 | `pnpm release:check`           | Run the complete local release gate                   |
 | `pnpm db:generate`             | Generate a reviewed schema migration                  |
 | `pnpm db:check`                | Check migration history consistency                   |
+| `pnpm db:doctor`               | Run a read-only pooler/schema/lock connectivity check |
 | `pnpm db:migrate`              | Apply pending migrations                              |
 | `pnpm db:seed`                 | Idempotently seed the demo catalogue                  |
 | `pnpm db:admin`                | Provision the configured Auth user                    |

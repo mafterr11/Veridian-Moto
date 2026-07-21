@@ -63,53 +63,48 @@ async function loadAuthoritativeCatalogue(slug: string) {
     );
   }
 
-  const [groups, choices, rules, features] = await Promise.all([
-    db
-      .select()
-      .from(optionGroups)
-      .where(
-        and(
-          eq(optionGroups.modelId, model.id),
-          eq(optionGroups.status, "published"),
-        ),
-      )
-      .orderBy(asc(optionGroups.sortOrder)),
-    db
-      .select()
-      .from(optionChoices)
-      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-      .where(
-        and(
-          eq(optionGroups.modelId, model.id),
-          eq(optionGroups.status, "published"),
-          eq(optionChoices.status, "published"),
-        ),
-      )
-      .orderBy(asc(optionChoices.sortOrder)),
-    db
-      .select({
-        sourceChoiceId: optionRules.sourceChoiceId,
-        targetChoiceId: optionRules.targetChoiceId,
-        ruleType: optionRules.ruleType,
-      })
-      .from(optionRules)
-      .innerJoin(
-        optionChoices,
-        eq(optionRules.sourceChoiceId, optionChoices.id),
-      )
-      .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
-      .where(eq(optionGroups.modelId, model.id)),
-    db
-      .select({ label: modelFeatures.label, value: modelFeatures.value })
-      .from(modelFeatures)
-      .where(
-        and(
-          eq(modelFeatures.modelId, model.id),
-          eq(modelFeatures.isStandard, true),
-        ),
-      )
-      .orderBy(asc(modelFeatures.sortOrder)),
-  ]);
+  const groups = await db
+    .select()
+    .from(optionGroups)
+    .where(
+      and(
+        eq(optionGroups.modelId, model.id),
+        eq(optionGroups.status, "published"),
+      ),
+    )
+    .orderBy(asc(optionGroups.sortOrder));
+  const choices = await db
+    .select()
+    .from(optionChoices)
+    .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+    .where(
+      and(
+        eq(optionGroups.modelId, model.id),
+        eq(optionGroups.status, "published"),
+        eq(optionChoices.status, "published"),
+      ),
+    )
+    .orderBy(asc(optionChoices.sortOrder));
+  const rules = await db
+    .select({
+      sourceChoiceId: optionRules.sourceChoiceId,
+      targetChoiceId: optionRules.targetChoiceId,
+      ruleType: optionRules.ruleType,
+    })
+    .from(optionRules)
+    .innerJoin(optionChoices, eq(optionRules.sourceChoiceId, optionChoices.id))
+    .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+    .where(eq(optionGroups.modelId, model.id));
+  const features = await db
+    .select({ label: modelFeatures.label, value: modelFeatures.value })
+    .from(modelFeatures)
+    .where(
+      and(
+        eq(modelFeatures.modelId, model.id),
+        eq(modelFeatures.isStandard, true),
+      ),
+    )
+    .orderBy(asc(modelFeatures.sortOrder));
 
   const requires = new Map<string, string[]>();
   const excludes = new Map<string, string[]>();

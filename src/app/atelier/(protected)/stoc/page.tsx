@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
 import {
   archiveInventoryAction,
@@ -31,9 +30,7 @@ export default function AdminInventoryPage() {
         title="Stoc"
         description="Administrează unitățile fizice, inclusiv datele private. Doar înregistrările în tranzit sau disponibile pot fi afișate public."
       />
-      <Suspense fallback={<p className="mt-10 text-sm">Se încarcă…</p>}>
-        <InventoryWorkspace />
-      </Suspense>
+      <InventoryWorkspace />
     </main>
   );
 }

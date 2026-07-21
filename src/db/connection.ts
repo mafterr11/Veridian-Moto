@@ -6,6 +6,10 @@ import * as schema from "@/db/schema";
 export const serverlessDatabaseOptions = {
   // Supabase's transaction pooler does not support named prepared statements.
   prepare: false,
+  // Avoid an extra pg_type discovery round-trip when a serverless instance
+  // opens its first pooled connection. VERIDIAN only uses PostgreSQL built-ins.
+  fetch_types: false,
+  ssl: "require",
   // Each Vercel function instance owns its module state. Keeping this at one
   // prevents every warm instance from reserving a five-connection sub-pool.
   max: 1,
@@ -26,7 +30,8 @@ export function createDatabaseConnection(databaseUrl: string) {
 
   return {
     db: drizzle(client, { schema }),
-    close: () => client.end(),
+    sql: client,
+    close: () => client.end({ timeout: 5 }),
   };
 }
 

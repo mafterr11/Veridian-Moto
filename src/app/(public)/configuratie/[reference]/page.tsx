@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { CheckCircle2, LockKeyhole } from "lucide-react";
 
 import { ConfigurationShareButton } from "@/components/configurator/configuration-share-button";
@@ -19,11 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default function SavedConfigurationPage({ params }: PageProps) {
-  return (
-    <Suspense fallback={<SavedConfigurationFallback />}>
-      <SavedConfigurationContent params={params} />
-    </Suspense>
-  );
+  return <SavedConfigurationContent params={params} />;
 }
 
 async function SavedConfigurationContent({ params }: PageProps) {
@@ -127,18 +122,6 @@ async function SavedConfigurationContent({ params }: PageProps) {
           catalog nu schimbă denumirile sau prețurile salvate aici și nu rezervă
           o motocicletă din stoc.
         </div>
-      </div>
-    </main>
-  );
-}
-
-function SavedConfigurationFallback() {
-  return (
-    <main className="bg-porcelain text-obsidian py-16 sm:py-24">
-      <div className="mx-auto max-w-4xl animate-pulse px-5 sm:px-8">
-        <div className="bg-veridian/10 h-24" />
-        <div className="bg-obsidian/10 mt-10 h-20 w-3/4" />
-        <div className="bg-obsidian/5 mt-10 h-96" />
       </div>
     </main>
   );
