@@ -127,6 +127,7 @@ async function DashboardMetrics() {
           </p>
           <Link
             href={href}
+            prefetch={false}
             className={buttonVariants({ variant: "link", className: "mt-4" })}
           >
             Administrează <ArrowUpRight aria-hidden="true" />

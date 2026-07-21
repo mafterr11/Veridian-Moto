@@ -5,12 +5,12 @@ import * as schema from "@/db/schema";
 
 export function createDatabaseConnection(databaseUrl: string) {
   const client = postgres(databaseUrl, {
-    // Supabase's transaction pooler does not support named prepared statements.
-    prepare: false,
-    max: 5,
-    idle_timeout: 20,
-    connect_timeout: 10,
-  });
+  prepare: false,
+  max: 1,
+  idle_timeout: 10,
+  connect_timeout: 10,
+  max_lifetime: 60,
+});
 
   return {
     db: drizzle(client, { schema }),
