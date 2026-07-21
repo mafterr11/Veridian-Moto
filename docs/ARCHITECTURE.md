@@ -78,6 +78,9 @@ Directories are created when their first real module is introduced. Empty archit
 - `public-editorial.ts` exposes only published articles whose publication time has
   arrived. The protected preview uses a separate authenticated query, while the body
   renderer accepts a conservative Markdown-style subset and never emits raw HTML.
+- PostgreSQL timestamps are serialized to ISO strings before entering
+  `unstable_cache` and restored at the public query boundary. This keeps first loads
+  and later JSON-backed cache hits runtime-equivalent.
 - `public-site-settings.ts` owns the cached public contact and SEO projection. A
   singleton settings mutation invalidates the shared tag so the layout, footer,
   contact page, and metadata converge without coupling those components to Drizzle.

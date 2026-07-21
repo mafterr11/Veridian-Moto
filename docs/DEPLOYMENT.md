@@ -28,8 +28,8 @@ The GitHub Actions quality workflow runs the same static/unit/build gate, the
 production dependency audit, and the database-free Playwright suite on `main` and
 pull requests.
 
-The final repair verification completed on 21 July 2026 with 90 Vitest tests across
-29 files, a successful production build, and a passing 24-route local production
+The final repair verification completed on 21 July 2026 with 93 Vitest tests across
+31 files, a successful production build, and a passing 24-route local production
 HTTP matrix. The public Playwright suite remains part of GitHub Actions (with one
 database-dependent journey intentionally skipped when credentials are absent).
 
@@ -139,6 +139,10 @@ state instead of leaving a 200 response open until Vercel's function timeout.
 Public data uses a one-hour `unstable_cache`; public and Atelier routes remain
 request-rendered. Cache Components and build-time dynamic-slug enumeration are
 intentionally disabled, so `next build` never requires a live production database.
+Date values cross the JSON-backed `unstable_cache` boundary as ISO strings and are
+restored to `Date` objects before reaching page components. Keep that conversion for
+editorial dates, sitemap timestamps, and saved-configuration timestamps; otherwise a
+route can work while filling the cache and fail on the next cache hit.
 
 ## Release order
 
@@ -168,7 +172,8 @@ deployment may overlap. Never edit or delete an already-applied migration.
 
 Automated smoke checks verify:
 
-- homepage and model-catalogue availability;
+- homepage, model-catalogue, and editorial availability, including repeated
+  JSON-backed cache hits;
 - CSP, clickjacking, MIME-sniffing, and referrer headers;
 - the non-cacheable `/api/health` liveness endpoint;
 - unauthenticated Atelier redirection plus its private/noindex policy.

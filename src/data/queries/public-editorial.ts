@@ -5,6 +5,7 @@ import { unstable_cache } from "next/cache";
 
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import { discoverCategories, discoverPosts, mediaAssets } from "@/db/schema";
+import { restoreCacheDate, serializeCacheDate } from "@/data/cache-date";
 import { CACHE_TAGS } from "@/data/cache-tags";
 import { articles, getDemoArticle } from "@/data/editorial";
 
@@ -27,6 +28,37 @@ export type PublicArticleDetail = PublicArticleSummary & {
   seoDescription?: string;
 };
 
+type CachedPublicArticleSummary = Omit<
+  PublicArticleSummary,
+  "publishedAt" | "updatedAt"
+> & {
+  publishedAt: string;
+  updatedAt: string;
+};
+
+type CachedPublicArticleDetail = Omit<
+  PublicArticleDetail,
+  "publishedAt" | "updatedAt"
+> & {
+  publishedAt: string;
+  updatedAt: string;
+};
+
+function restoreArticleDates<
+  T extends { publishedAt: Date | string; updatedAt: Date | string },
+>(
+  article: T,
+): Omit<T, "publishedAt" | "updatedAt"> & {
+  publishedAt: Date;
+  updatedAt: Date;
+} {
+  return {
+    ...article,
+    publishedAt: restoreCacheDate(article.publishedAt),
+    updatedAt: restoreCacheDate(article.updatedAt),
+  };
+}
+
 function demoSummary(article: (typeof articles)[number]): PublicArticleSummary {
   const publishedAt = new Date(article.publishedAt);
   return {
@@ -43,7 +75,9 @@ function demoSummary(article: (typeof articles)[number]): PublicArticleSummary {
   };
 }
 
-async function loadPublicArticles(): Promise<readonly PublicArticleSummary[]> {
+async function loadPublicArticles(): Promise<
+  readonly CachedPublicArticleSummary[]
+> {
   const rows = await getDatabase()
     .select({
       slug: discoverPosts.slug,
@@ -72,7 +106,15 @@ async function loadPublicArticles(): Promise<readonly PublicArticleSummary[]> {
     .orderBy(desc(discoverPosts.featured), desc(discoverPosts.publishedAt));
 
   return rows.flatMap((row) =>
-    row.publishedAt ? [{ ...row, publishedAt: row.publishedAt }] : [],
+    row.publishedAt
+      ? [
+          {
+            ...row,
+            publishedAt: serializeCacheDate(row.publishedAt),
+            updatedAt: serializeCacheDate(row.updatedAt),
+          },
+        ]
+      : [],
   );
 }
 
@@ -86,7 +128,7 @@ export async function getPublicArticles(): Promise<
   readonly PublicArticleSummary[]
 > {
   if (!isDatabaseConfigured()) return articles.map(demoSummary);
-  return getCachedPublicArticles();
+  return (await getCachedPublicArticles()).map(restoreArticleDates);
 }
 
 export async function getPublicDiscoverCategories(
@@ -112,7 +154,7 @@ export async function getPublicDiscoverCategories(
 
 async function loadPublicArticle(
   slug: string,
-): Promise<PublicArticleDetail | undefined> {
+): Promise<CachedPublicArticleDetail | undefined> {
   const [row] = await getDatabase()
     .select({
       slug: discoverPosts.slug,
@@ -147,7 +189,8 @@ async function loadPublicArticle(
   if (!row?.publishedAt) return undefined;
   return {
     ...row,
-    publishedAt: row.publishedAt,
+    publishedAt: serializeCacheDate(row.publishedAt),
+    updatedAt: serializeCacheDate(row.updatedAt),
     seoTitle: row.seoTitle ?? undefined,
     seoDescription: row.seoDescription ?? undefined,
   };
@@ -176,7 +219,8 @@ export async function getPublicArticle(
       : undefined;
   }
 
-  return getCachedPublicArticle(slug);
+  const article = await getCachedPublicArticle(slug);
+  return article ? restoreArticleDates(article) : undefined;
 }
 
 export async function getPublicArticleSlugs() {
@@ -185,7 +229,7 @@ export async function getPublicArticleSlugs() {
 
 const getCachedPublicArticleIndexEntries = unstable_cache(
   async () => {
-    return getDatabase()
+    const rows = await getDatabase()
       .select({
         slug: discoverPosts.slug,
         updatedAt: discoverPosts.updatedAt,
@@ -198,6 +242,11 @@ const getCachedPublicArticleIndexEntries = unstable_cache(
         ),
       )
       .orderBy(asc(discoverPosts.slug));
+
+    return rows.map((row) => ({
+      ...row,
+      updatedAt: serializeCacheDate(row.updatedAt),
+    }));
   },
   ["public-article-index"],
   {
@@ -214,5 +263,8 @@ export async function getPublicArticleIndexEntries() {
     }));
   }
 
-  return getCachedPublicArticleIndexEntries();
+  return (await getCachedPublicArticleIndexEntries()).map((entry) => ({
+    ...entry,
+    updatedAt: restoreCacheDate(entry.updatedAt),
+  }));
 }

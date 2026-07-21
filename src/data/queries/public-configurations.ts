@@ -12,6 +12,7 @@ import {
   optionGroups,
 } from "@/db/schema";
 import { CACHE_TAGS } from "@/data/cache-tags";
+import { restoreCacheDate, serializeCacheDate } from "@/data/cache-date";
 
 async function loadPublicConfiguration(reference: string) {
   const db = getDatabase();
@@ -66,7 +67,7 @@ async function loadPublicConfiguration(reference: string) {
     basePriceMinor: snapshot.basePriceMinor,
     totalPriceMinor: snapshot.totalPriceMinor,
     currency: snapshot.currency,
-    createdAt: snapshot.createdAt,
+    createdAt: serializeCacheDate(snapshot.createdAt),
     selectedChoices: snapshot.selectedChoices.map((choice) => ({
       ...choice,
       isCurrentlyAvailable: availableKeys.has(
@@ -84,5 +85,11 @@ const getCachedPublicConfiguration = unstable_cache(
 
 export async function getPublicConfiguration(reference?: string) {
   if (!reference || !isDatabaseConfigured()) return undefined;
-  return getCachedPublicConfiguration(reference);
+  const configuration = await getCachedPublicConfiguration(reference);
+  return configuration
+    ? {
+        ...configuration,
+        createdAt: restoreCacheDate(configuration.createdAt),
+      }
+    : undefined;
 }

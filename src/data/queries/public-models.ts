@@ -13,6 +13,7 @@ import {
   modelMedia,
   motorcycleModels,
 } from "@/db/schema";
+import { restoreCacheDate, serializeCacheDate } from "@/data/cache-date";
 import { CACHE_TAGS } from "@/data/cache-tags";
 import { demoModelMetadata, getModel, motorcycles } from "@/data/catalogue";
 import {
@@ -30,7 +31,7 @@ export type PublicCategoryDTO = {
 
 const getCachedPublicModelIndexEntries = unstable_cache(
   async () => {
-    return getDatabase()
+    const rows = await getDatabase()
       .select({
         slug: motorcycleModels.slug,
         updatedAt: motorcycleModels.updatedAt,
@@ -44,6 +45,11 @@ const getCachedPublicModelIndexEntries = unstable_cache(
         ),
       )
       .orderBy(asc(motorcycleModels.slug));
+
+    return rows.map((row) => ({
+      ...row,
+      updatedAt: serializeCacheDate(row.updatedAt),
+    }));
   },
   ["public-model-index"],
   {
@@ -60,7 +66,10 @@ export async function getPublicModelIndexEntries() {
     }));
   }
 
-  return getCachedPublicModelIndexEntries();
+  return (await getCachedPublicModelIndexEntries()).map((entry) => ({
+    ...entry,
+    updatedAt: restoreCacheDate(entry.updatedAt),
+  }));
 }
 
 async function loadPublicCategories(): Promise<readonly PublicCategoryDTO[]> {

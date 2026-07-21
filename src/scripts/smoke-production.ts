@@ -35,22 +35,41 @@ function requireHeader(response: Response, name: string, value?: string) {
   }
 }
 
-async function run() {
-  const homepage = await request("/");
-  if (!homepage.ok || !(await homepage.text()).includes("VERIDIAN")) {
-    throw new Error("The homepage did not return the expected VERIDIAN shell.");
+const publicErrorSignature = "Drumul s-a întrerupt aici.";
+
+async function requirePublicPage(path: string, expectedText: string) {
+  const response = await request(path);
+  const body = await response.text();
+
+  if (
+    !response.ok ||
+    !body.includes(expectedText) ||
+    body.includes(publicErrorSignature)
+  ) {
+    throw new Error(
+      `${path} did not render its expected public content (status ${response.status}).`,
+    );
   }
+
+  return response;
+}
+
+async function run() {
+  const homepage = await requirePublicPage("/", "Echipat pentru mai departe");
   requireHeader(homepage, "content-security-policy");
   requireHeader(homepage, "x-content-type-options", "nosniff");
   requireHeader(homepage, "x-frame-options", "deny");
   requireHeader(homepage, "referrer-policy");
   process.stdout.write("[ok] Homepage and browser security headers\n");
 
-  const models = await request("/modele");
-  if (!models.ok) {
-    throw new Error(`The model catalogue returned ${models.status}.`);
-  }
+  await requirePublicPage("/modele", "Făcută pentru");
   process.stdout.write("[ok] Public model catalogue\n");
+
+  // Homepage and Descoperă share the editorial cache. Checking both, followed
+  // by a second homepage request, exercises both a cache fill and cache hits.
+  await requirePublicPage("/descopera", "Drumul începe înainte de pornire.");
+  await requirePublicPage("/", "Echipat pentru mai departe");
+  process.stdout.write("[ok] Editorial cache fill and repeated cache hits\n");
 
   const health = await request("/api/health");
   const healthBody = (await health.json()) as { status?: unknown };
