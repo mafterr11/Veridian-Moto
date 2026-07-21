@@ -56,15 +56,15 @@ export async function getConfigurableModels() {
 }
 
 export async function getPublicConfigurator(
-  slug: string,
+  slug?: string,
 ): Promise<PublicConfiguratorDTO | undefined> {
   "use cache";
   cacheLife("hours");
-  cacheTag(
-    CACHE_TAGS.publicCatalogue,
-    CACHE_TAGS.publicModels,
-    modelCacheTag(slug),
-  );
+  cacheTag(CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels);
+
+  if (!slug) return undefined;
+
+  cacheTag(modelCacheTag(slug));
 
   const publicModels = await getPublicModels();
   const publicModel = publicModels.find((model) => model.slug === slug);

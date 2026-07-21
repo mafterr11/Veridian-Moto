@@ -107,11 +107,17 @@ export async function getPublicDiscoverCategories() {
 }
 
 export async function getPublicArticle(
-  slug: string,
+  slug?: string,
 ): Promise<PublicArticleDetail | undefined> {
   "use cache";
   cacheLife("hours");
-  cacheTag(CACHE_TAGS.publicDiscover, discoverPostCacheTag(slug));
+  cacheTag(CACHE_TAGS.publicDiscover);
+
+  // Cache Components can prerender the generic dynamic route before a concrete
+  // parameter exists. Never pass that temporary undefined value to Drizzle.
+  if (!slug) return undefined;
+
+  cacheTag(discoverPostCacheTag(slug));
 
   if (!isDatabaseConfigured()) {
     const article = getDemoArticle(slug);

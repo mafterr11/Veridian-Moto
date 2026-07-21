@@ -210,7 +210,7 @@ export async function getPublicModels(): Promise<readonly PublicModelDTO[]> {
 }
 
 export async function getPublicModel(
-  slug: string,
+  slug?: string,
 ): Promise<PublicModelDetailDTO | undefined> {
   "use cache";
   cacheLife("hours");
@@ -218,8 +218,13 @@ export async function getPublicModel(
     CACHE_TAGS.publicCatalogue,
     CACHE_TAGS.publicModels,
     CACHE_TAGS.publicInventory,
-    modelCacheTag(slug),
   );
+
+  // Cache Components can prerender the generic dynamic route before a concrete
+  // parameter exists. Never pass that temporary undefined value to Drizzle.
+  if (!slug) return undefined;
+
+  cacheTag(modelCacheTag(slug));
 
   if (!isDatabaseConfigured()) {
     const model = getModel(slug);

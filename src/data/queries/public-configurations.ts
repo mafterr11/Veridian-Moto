@@ -13,9 +13,12 @@ import {
 } from "@/db/schema";
 import { modelCacheTag } from "@/data/cache-tags";
 
-export async function getPublicConfiguration(reference: string) {
+export async function getPublicConfiguration(reference?: string) {
   "use cache";
   cacheLife("hours");
+
+  if (!reference) return undefined;
+
   cacheTag(`public:configuration:${reference}`);
 
   if (!isDatabaseConfigured()) return undefined;
