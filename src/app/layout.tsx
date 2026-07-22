@@ -5,12 +5,34 @@ import { env } from "@/env";
 
 import "./globals.css";
 
+const socialImage = {
+  url: "/opengraph-image.png",
+  width: 1200,
+  height: 630,
+  alt: "VERIDIAN Moto — Mai mult drum.",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
   applicationName: "VERIDIAN Moto",
   title: defaultSiteSettings.defaultSeoTitle,
   description: defaultSiteSettings.defaultSeoDescription,
   creator: "VERIDIAN Moto",
+  openGraph: {
+    type: "website",
+    locale: "ro_RO",
+    url: "/",
+    siteName: "VERIDIAN Moto",
+    title: defaultSiteSettings.defaultSeoTitle,
+    description: defaultSiteSettings.defaultSeoDescription,
+    images: [socialImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultSiteSettings.defaultSeoTitle,
+    description: defaultSiteSettings.defaultSeoDescription,
+    images: ["/twitter-image.png"],
+  },
 };
 
 export const viewport: Viewport = {
