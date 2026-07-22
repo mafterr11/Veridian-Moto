@@ -1,0 +1,72 @@
+name: VERIDIAN verified release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/veridian-release-once.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: veridian-verified-release
+  cancel-in-progress: false
+
+jobs:
+  verify-seed-smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'chore: run verified VERIDIAN release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Use pnpm 11.7.0
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+
+      - name: Confirm database secret
+        shell: bash
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL is not configured as a GitHub Actions repository secret."
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check production database
+        run: pnpm db:doctor
+
+      - name: Seed verified catalogue and editorial content
+        run: pnpm db:seed
+
+      - name: Run complete release verification
+        run: pnpm release:check
+
+      - name: Smoke-test production after deployment
+        shell: bash
+        run: |
+          for attempt in {1..15}; do
+            if pnpm smoke:production -- https://veridian-moto.vercel.app; then
+              exit 0
+            fi
+            echo "Production is not ready yet; retrying in 20 seconds (attempt $attempt/15)."
+            sleep 20
+          done
+          echo "::error::Production smoke test did not pass after 15 attempts."
+          exit 1
