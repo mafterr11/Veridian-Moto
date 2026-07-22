@@ -37,39 +37,90 @@ function requireHeader(response: Response, name: string, value?: string) {
 
 const publicErrorSignature = "Drumul s-a întrerupt aici.";
 
-async function requirePublicPage(path: string, expectedText: string) {
+async function requirePublicContent(
+  path: string,
+  expectedTexts: readonly string[],
+) {
   const response = await request(path);
   const body = await response.text();
+  const missingTexts = expectedTexts.filter((text) => !body.includes(text));
 
   if (
     !response.ok ||
-    !body.includes(expectedText) ||
+    missingTexts.length > 0 ||
     body.includes(publicErrorSignature)
   ) {
     throw new Error(
-      `${path} did not render its expected public content (status ${response.status}).`,
+      `${path} did not render its expected public content (status ${response.status}; missing: ${
+        missingTexts.join(", ") || "none"
+      }).`,
     );
   }
 
-  return response;
+  return { body, response };
+}
+
+async function requirePublicPage(path: string, expectedText: string) {
+  return requirePublicContent(path, [expectedText]);
 }
 
 async function run() {
   const homepage = await requirePublicPage("/", "Echipat pentru mai departe");
-  requireHeader(homepage, "content-security-policy");
-  requireHeader(homepage, "x-content-type-options", "nosniff");
-  requireHeader(homepage, "x-frame-options", "deny");
-  requireHeader(homepage, "referrer-policy");
+  requireHeader(homepage.response, "content-security-policy");
+  requireHeader(homepage.response, "x-content-type-options", "nosniff");
+  requireHeader(homepage.response, "x-frame-options", "deny");
+  requireHeader(homepage.response, "referrer-policy");
   process.stdout.write("[ok] Homepage and browser security headers\n");
 
-  await requirePublicPage("/modele", "Făcută pentru");
-  process.stdout.write("[ok] Public model catalogue\n");
+  const optimizedImage = await request(
+    "/_next/image?url=%2Fimages%2Fmodels%2Fterran-650.webp&w=640&q=75",
+  );
+  const optimizedImageBytes = (await optimizedImage.arrayBuffer()).byteLength;
+  if (!optimizedImage.ok || optimizedImageBytes < 1_000) {
+    throw new Error(
+      `Next image optimization failed (status ${optimizedImage.status}; ${optimizedImageBytes} bytes).`,
+    );
+  }
+  requireHeader(optimizedImage, "content-type", "image/");
+  process.stdout.write("[ok] Patched image optimization runtime\n");
+
+  await requirePublicContent("/modele", [
+    "Făcută pentru",
+    "36.990",
+    "54.990",
+    "66.990",
+    "59.990",
+  ]);
+  process.stdout.write("[ok] Public model catalogue and refreshed prices\n");
+
+  await requirePublicContent("/accesorii", [
+    "Set cutii laterale aluminium",
+    "Șa Comfort Touring",
+    "Bare protecție motor",
+    "Suport telefon &amp; navigație",
+    "Top case 42 L",
+    "Stand paddock spate",
+    "Manșoane încălzite Touring",
+    "Kit proiectoare LED Adventure",
+    "Parbriz Touring reglabil",
+    "Geantă rezervor 12 L",
+    "Kit pană &amp; compresor 12 V",
+    "Scut motor din aluminiu",
+  ]);
+  process.stdout.write("[ok] Complete accessory range and custom imagery\n");
 
   // Homepage and Descoperă share the editorial cache. Checking both, followed
   // by a second homepage request, exercises both a cache fill and cache hits.
   await requirePublicPage("/descopera", "Drumul începe înainte de pornire.");
+  await requirePublicContent("/descopera/abs-in-viraj", [
+    "Ce face, de fapt, ABS-ul în viraj",
+    "Cuprinsul articolului",
+    "Ideea de reținut",
+  ]);
   await requirePublicPage("/", "Echipat pentru mai departe");
-  process.stdout.write("[ok] Editorial cache fill and repeated cache hits\n");
+  process.stdout.write(
+    "[ok] Expanded editorial layout, cache fill and repeated cache hits\n",
+  );
 
   const health = await request("/api/health");
   const healthBody = (await health.json()) as { status?: unknown };

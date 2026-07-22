@@ -49,6 +49,8 @@ state, media IDs, and scheduling values are never written without database check
 
 ## Seed behavior
 
-`pnpm db:seed` adds the fictional categories and six complete articles when absent.
-It reuses catalogue media as article covers to avoid extra storage cost. Existing
-posts and settings are preserved, making the command safe for repeated demo setup.
+`pnpm db:seed` upserts the fictional categories and six complete demo articles by
+stable slug. This allows a content release to refresh existing demo databases. It
+reuses catalogue media as article covers and preserves site settings plus any post
+created under a different slug. Administrator edits made directly to one of the six
+checked-in demo slugs are intentionally replaced on the next seed run.

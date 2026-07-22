@@ -30,4 +30,19 @@ describe("catalogue", () => {
     expect(getModel("rift-700")?.name).toBe("Rift 700");
     expect(getModel("missing")).toBeUndefined();
   });
+
+  it("keeps the researched 2026 launch prices in whole RON", () => {
+    expect(
+      Object.fromEntries(motorcycles.map((model) => [model.slug, model.price])),
+    ).toEqual({
+      "terran-650": 36_990,
+      "terran-900-rally": 54_990,
+      "apex-675-r": 39_990,
+      "apex-900-rr": 66_990,
+      "rift-700": 38_990,
+      "meridian-900-gt": 59_990,
+      "foundry-800": 47_990,
+      "volt-e2": 59_990,
+    });
+  });
 });

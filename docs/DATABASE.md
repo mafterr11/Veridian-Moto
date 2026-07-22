@@ -34,11 +34,13 @@ in `drizzle/`; migrations are reviewed and committed before they are applied.
 8. Add the service-role key locally, run `pnpm db:admin`, then remove that key from
    any environment that does not need administrative provisioning.
 
-The commands are idempotent where practical: catalogue records are upserted by
-their stable slugs and the admin profile by the Auth user UUID. The configurator seed
-creates options only when a model has none. Editorial posts are inserted only when
-their slug is absent, and the singleton site-settings seed never overwrites existing
-values. Rerunning the seed therefore preserves administrator-authored content.
+The commands are idempotent where practical: catalogue records and the six demo
+editorial posts are upserted by stable slug, while the admin profile uses the Auth
+user UUID. Seeded inventory units receive the refreshed model price; non-seeded stock
+codes are left untouched. The configurator seed creates options only when a model has
+none, and the singleton site-settings seed never overwrites existing values. Records
+created by an administrator under other slugs are preserved; edits made directly to a
+checked-in demo slug are intentionally refreshed by the seed.
 
 Migration `0002_catalogue_storage.sql` creates the public `catalogue` Storage
 bucket and its authenticated-admin write policies. Apply all migrations before

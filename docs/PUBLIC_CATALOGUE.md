@@ -46,6 +46,9 @@ from becoming executable markup.
 
 ## Seed behavior
 
-The idempotent database seed now includes card and hero placements, standard model
-features, published accessory categories, accessories, media reuse, and model
-compatibility. It does not remove existing administrative content.
+The idempotent database seed includes card and hero placements, standard model
+features, published accessory categories, dedicated accessory media, and exact model
+compatibility. It refreshes checked-in records by stable slug without removing
+administrator-created records under other slugs. For seeded accessories, the primary
+image and compatibility set are intentionally synchronized with the checked-in
+catalogue.

@@ -20,3 +20,4 @@ minimumReleaseAgeExclude:
 overrides:
   postcss@<8.5.10: 8.5.20
   esbuild@<=0.24.2: 0.25.12
+  sharp: 0.35.3

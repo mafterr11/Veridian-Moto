@@ -8,6 +8,7 @@ import { discoverCategories, discoverPosts, mediaAssets } from "@/db/schema";
 import { restoreCacheDate, serializeCacheDate } from "@/data/cache-date";
 import { CACHE_TAGS } from "@/data/cache-tags";
 import { articles, getDemoArticle } from "@/data/editorial";
+import { estimateReadingMinutes } from "@/domain/editorial/reading-time";
 
 export type PublicArticleSummary = {
   slug: string;
@@ -20,6 +21,7 @@ export type PublicArticleSummary = {
   publishedAt: Date;
   updatedAt: Date;
   featured: boolean;
+  readingMinutes: number;
 };
 
 export type PublicArticleDetail = PublicArticleSummary & {
@@ -72,6 +74,7 @@ function demoSummary(article: (typeof articles)[number]): PublicArticleSummary {
     publishedAt,
     updatedAt: publishedAt,
     featured: article.featured,
+    readingMinutes: estimateReadingMinutes(article.bodyMarkdown),
   };
 }
 
@@ -90,6 +93,7 @@ async function loadPublicArticles(): Promise<
       publishedAt: discoverPosts.publishedAt,
       updatedAt: discoverPosts.updatedAt,
       featured: discoverPosts.featured,
+      bodyMarkdown: discoverPosts.bodyMarkdown,
     })
     .from(discoverPosts)
     .innerJoin(
@@ -105,17 +109,18 @@ async function loadPublicArticles(): Promise<
     )
     .orderBy(desc(discoverPosts.featured), desc(discoverPosts.publishedAt));
 
-  return rows.flatMap((row) =>
-    row.publishedAt
-      ? [
-          {
-            ...row,
-            publishedAt: serializeCacheDate(row.publishedAt),
-            updatedAt: serializeCacheDate(row.updatedAt),
-          },
-        ]
-      : [],
-  );
+  return rows.flatMap((row) => {
+    if (!row.publishedAt) return [];
+    const { bodyMarkdown, ...summary } = row;
+    return [
+      {
+        ...summary,
+        publishedAt: serializeCacheDate(row.publishedAt),
+        updatedAt: serializeCacheDate(row.updatedAt),
+        readingMinutes: estimateReadingMinutes(bodyMarkdown),
+      },
+    ];
+  });
 }
 
 const getCachedPublicArticles = unstable_cache(
@@ -191,6 +196,7 @@ async function loadPublicArticle(
     ...row,
     publishedAt: serializeCacheDate(row.publishedAt),
     updatedAt: serializeCacheDate(row.updatedAt),
+    readingMinutes: estimateReadingMinutes(row.bodyMarkdown),
     seoTitle: row.seoTitle ?? undefined,
     seoDescription: row.seoDescription ?? undefined,
   };

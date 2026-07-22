@@ -13,6 +13,12 @@ are intentionally not part of the repository, so the final public deployment and
 authenticated production smoke pass are completed by the project owner. See
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the exact handoff.
 
+The current content refresh adds market-calibrated Romanian launch prices for all
+eight models, a 12-product accessory range with dedicated original imagery, and six
+expanded long-form articles in a redesigned editorial experience. The pricing
+method and dated sources are recorded in
+[docs/CONTENT_RESEARCH.md](docs/CONTENT_RESEARCH.md).
+
 ## Stack
 
 - Next.js 16 App Router

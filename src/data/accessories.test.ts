@@ -10,8 +10,19 @@ describe("accessory catalogue filtering", () => {
     });
 
     expect(result.map((item) => item.slug)).toEqual([
+      "geanta-rezervor-12l",
       "set-cutii-laterale-aluminium",
     ]);
+  });
+
+  it("ships a complete twelve-product range with dedicated imagery", () => {
+    expect(demoAccessories).toHaveLength(12);
+    expect(
+      demoAccessories.every(
+        (item) => item.image === `/images/accessories/${item.slug}.webp`,
+      ),
+    ).toBe(true);
+    expect(new Set(demoAccessories.map((item) => item.image))).toHaveLength(12);
   });
 
   it("sorts without mutating the source catalogue", () => {

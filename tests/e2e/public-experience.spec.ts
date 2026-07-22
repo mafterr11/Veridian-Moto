@@ -62,19 +62,33 @@ test("renders public inventory without private stock fields", async ({
 test("filters the published accessory catalogue", async ({ page }) => {
   await page.goto("/accesorii?category=Bagaje&stock=in_stock");
 
-  await expect(page.getByText("1 accesoriu găsit")).toBeVisible();
+  await expect(page.getByText("2 accesorii găsite")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Set cutii laterale aluminium" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Geantă rezervor 12 L" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Top case 42 L" }),
   ).toHaveCount(0);
 });
 
+test("renders the complete accessory collection with dedicated images", async ({
+  page,
+}) => {
+  await page.goto("/accesorii");
+
+  await expect(page.getByText("12 accesorii găsite")).toBeVisible();
+  await expect(page.locator("main article img")).toHaveCount(12);
+});
+
 test("filters and opens published editorial content", async ({ page }) => {
   await page.goto("/descopera?category=tehnologie");
 
-  await expect(page.getByText("2 articole găsite")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Mai multe din jurnal" }),
+  ).toBeVisible();
   await page
     .getByRole("heading", { name: "Ce face, de fapt, ABS-ul în viraj" })
     .click();
@@ -88,6 +102,9 @@ test("filters and opens published editorial content", async ({ page }) => {
   await expect(
     page.locator('script[type="application/ld+json"]'),
   ).not.toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Cuprinsul articolului" }),
+  ).toBeVisible();
 });
 
 test("shows the centrally managed contact fallback", async ({ page }) => {
@@ -202,7 +219,7 @@ test("configures the Terran 900 Rally with rule feedback", async ({ page }) => {
   await expect(
     page.getByAltText("VERIDIAN Terran 900 Rally în finisaj Glacier White"),
   ).toBeVisible();
-  await expect(page.getByText(/50\.780/).first()).toBeVisible();
+  await expect(page.getByText(/55\.780/).first()).toBeVisible();
 
   await page.getByRole("button", { name: /4\. Protecție/i }).click();
   await page.getByRole("button", { name: /Kit protecție Rally/i }).click();

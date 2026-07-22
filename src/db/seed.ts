@@ -1,5 +1,5 @@
 import { config as loadEnv } from "dotenv";
-import { eq } from "drizzle-orm";
+import { and, eq, like } from "drizzle-orm";
 
 import { createDatabaseConnection } from "@/db/connection";
 import {
@@ -238,6 +238,21 @@ async function seed() {
           .from(inventoryUnits)
           .where(eq(inventoryUnits.modelId, storedModel.id));
 
+        if (existingInventory.length > 0) {
+          await tx
+            .update(inventoryUnits)
+            .set({
+              priceMinor: model.price * 100,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(inventoryUnits.modelId, storedModel.id),
+                like(inventoryUnits.stockCode, `${model.slug.toUpperCase()}-%`),
+              ),
+            );
+        }
+
         if (existingInventory.length === 0) {
           const inventoryCount =
             model.stockCount > 0
@@ -425,20 +440,49 @@ async function seed() {
           })
           .returning({ id: accessories.id });
 
-        if (accessory.image) {
-          const mediaId = mediaIdsByPath.get(accessory.image);
-          if (mediaId) {
-            await tx
-              .insert(accessoryMedia)
-              .values({
-                accessoryId: storedAccessory.id,
-                mediaId,
-                sortOrder: 0,
-              })
-              .onConflictDoNothing();
-          }
+        const imagePath = accessory.image;
+        if (imagePath) {
+          const [media] = await tx
+            .insert(mediaAssets)
+            .values({
+              storagePath: imagePath,
+              mimeType: "image/webp",
+              width: 1536,
+              height: 1024,
+              fileSizeBytes: 0,
+              altText: accessory.imageAlt ?? accessory.name,
+            })
+            .onConflictDoUpdate({
+              target: mediaAssets.storagePath,
+              set: {
+                mimeType: "image/webp",
+                width: 1536,
+                height: 1024,
+                altText: accessory.imageAlt ?? accessory.name,
+                updatedAt: new Date(),
+              },
+            })
+            .returning({ id: mediaAssets.id });
+
+          mediaIdsByPath.set(imagePath, media.id);
+          await tx
+            .delete(accessoryMedia)
+            .where(
+              and(
+                eq(accessoryMedia.accessoryId, storedAccessory.id),
+                eq(accessoryMedia.sortOrder, 0),
+              ),
+            );
+          await tx.insert(accessoryMedia).values({
+            accessoryId: storedAccessory.id,
+            mediaId: media.id,
+            sortOrder: 0,
+          });
         }
 
+        await tx
+          .delete(accessoryCompatibility)
+          .where(eq(accessoryCompatibility.accessoryId, storedAccessory.id));
         for (const modelName of accessory.compatibility) {
           const modelId = modelIdsByName.get(modelName);
           if (!modelId) continue;
@@ -490,7 +534,22 @@ async function seed() {
             seoTitle: article.seoTitle,
             seoDescription: article.seoDescription,
           })
-          .onConflictDoNothing({ target: discoverPosts.slug });
+          .onConflictDoUpdate({
+            target: discoverPosts.slug,
+            set: {
+              categoryId,
+              title: article.title,
+              excerpt: article.excerpt,
+              bodyMarkdown: article.bodyMarkdown,
+              coverMediaId,
+              featured: article.featured,
+              status: "published",
+              publishedAt: new Date(article.publishedAt),
+              seoTitle: article.seoTitle,
+              seoDescription: article.seoDescription,
+              updatedAt: new Date(),
+            },
+          });
       }
 
       await tx

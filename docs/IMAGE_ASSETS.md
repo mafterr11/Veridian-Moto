@@ -1,8 +1,9 @@
 # Generated image assets
 
-The eight motorcycle images were generated specifically for VERIDIAN Moto with
-the built-in image generation workflow and then converted to optimized WebP
-files for the site. They do not use photography from a real manufacturer.
+The motorcycle and accessory images were generated specifically for VERIDIAN
+Moto with the built-in image generation workflow and then converted to optimized
+WebP files for the site. They do not use photography from a real manufacturer or
+retailer.
 
 ## Shared prompt direction
 
@@ -38,6 +39,33 @@ distinct instead of producing recoloured duplicates.
 The two Terran configurator variants are deliberate exceptions: aligned colour
 edits are required so switching finish does not make the motorcycle jump between
 different compositions.
+
+## Accessory image set
+
+All 12 accessory renders use a consistent 3:2, 1536 × 1024 product-photography
+format. The prompt set required a single physically plausible product or kit,
+dark workshop/studio surfaces, controlled rim light, a restrained Veridian green
+accent and sufficient separation between black parts and the background. Text,
+logos, watermarks, motorcycles, riders, hands, packaging claims and recognizable
+third-party designs were excluded.
+
+| File                                | Prompt subject                                                                                              |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `set-cutii-laterale-aluminium.webp` | Matched pair of brushed-aluminium adventure side cases with black corner protection and mounting hardware.  |
+| `sa-comfort-touring.webp`           | Anatomical black touring seat with progressive foam volume, grippy panels and restrained green stitching.   |
+| `bare-protectie-motor.webp`         | Symmetrical black tubular-steel engine protection system with model-specific brackets and fasteners.        |
+| `suport-telefon-navigatie.webp`     | Machined-aluminium vibration-isolated phone/navigation mount with articulated arm and protected USB-C lead. |
+| `top-case-42l.webp`                 | Compact 42 L black top case with reinforced aluminium lid panel, lock and dedicated mounting plate.         |
+| `stand-paddock-spate.webp`          | Adjustable rear paddock stand with small wheels and both spool and swingarm adapters.                       |
+| `mansoane-incalzite-touring.webp`   | Matched heated-grip kit with compact five-level controller and neatly arranged wiring.                      |
+| `proiectoare-led-adventure.webp`    | Pair of round LED auxiliary lights with stone guards, brackets, relay, switch and complete harness.         |
+| `parbriz-touring-reglabil.webp`     | Light-smoke impact-resistant touring windscreen with height-adjustment rails and fasteners.                 |
+| `geanta-rezervor-12l.webp`          | Structured expandable 12 L tank bag with quick-release ring, rain cover and organized pockets.              |
+| `kit-reparatie-compresor.webp`      | Open hard case containing a compact 12 V compressor, gauge and tubeless puncture tools.                     |
+| `scut-motor-aluminiu.webp`          | Brushed 4 mm aluminium skid plate with reinforced folds, drainage openings, brackets and hardware.          |
+
+Production paths: `public/images/accessories/*.webp`. The optimized files range
+from approximately 26 KB to 93 KB and preserve the generated 1536 × 1024 canvas.
 
 ## Administration upload boundary
 

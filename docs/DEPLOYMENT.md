@@ -106,8 +106,10 @@ use transaction mode on port 6543.
 10. Set the Supabase Auth site URL to the canonical production origin. Keep any
     redirect allow-list limited to origins actually used by the project.
 
-The seed and admin commands are idempotent where practical. They can be rerun after
-a migration without overwriting administrator-authored site settings.
+The seed and admin commands are idempotent where practical. The seed updates the
+checked-in demo records identified by their stable slugs (including model prices,
+accessories and the six demo articles), but does not overwrite site settings or
+records created under other slugs.
 
 ## Vercel setup and first release
 
@@ -155,7 +157,8 @@ For each schema-changing release:
    lock waits.
 4. Apply backward-compatible migrations from the trusted setup environment with
    `pnpm db:migrate`.
-5. Run `pnpm db:seed` only when the release intentionally adds seed content.
+5. Run `pnpm db:seed` only when the release intentionally adds or refreshes checked-in
+   demo content. Back up any administrator edits made directly to those demo slugs.
 6. Deploy the application.
 7. Run the automated smoke checks:
 

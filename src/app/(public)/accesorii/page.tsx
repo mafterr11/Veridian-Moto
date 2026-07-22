@@ -132,9 +132,9 @@ async function AccessoriesCatalogue({
               return (
                 <article
                   key={accessory.slug}
-                  className="border-obsidian/15 flex min-h-[28rem] flex-col overflow-hidden border"
+                  className="border-obsidian/15 group hover:border-obsidian/35 flex min-h-[31rem] flex-col overflow-hidden border transition-[border-color,transform] duration-300 hover:-translate-y-1 motion-reduce:transform-none"
                 >
-                  <div className="bg-obsidian/5 relative aspect-[16/9] overflow-hidden">
+                  <div className="bg-obsidian/5 relative aspect-[3/2] overflow-hidden">
                     {accessory.image ? (
                       <Image
                         src={accessory.image}
@@ -143,7 +143,7 @@ async function AccessoriesCatalogue({
                         priority={index === 0}
                         loading={index === 0 ? "eager" : "lazy"}
                         sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                        className="object-cover"
+                        className="object-cover transition duration-500 group-hover:scale-[1.025] motion-reduce:transition-none"
                       />
                     ) : (
                       <Icon
@@ -151,6 +151,11 @@ async function AccessoriesCatalogue({
                         aria-hidden="true"
                       />
                     )}
+                    {accessory.featured ? (
+                      <span className="bg-veridian text-obsidian absolute top-4 left-4 px-3 py-2 text-[0.65rem] font-extrabold tracking-[0.14em] uppercase">
+                        Recomandat
+                      </span>
+                    ) : null}
                   </div>
                   <div className="flex flex-1 flex-col p-6">
                     <div className="flex items-start justify-between gap-4">

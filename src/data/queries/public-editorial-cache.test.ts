@@ -11,6 +11,7 @@ const databaseMocks = vi.hoisted(() => {
       categorySlug: "tehnologie",
       title: "Cache contract",
       excerpt: "A regression fixture.",
+      bodyMarkdown: "## Cache\n\nA regression fixture.",
       image: "/images/models/apex-675-r.webp",
       imageAlt: "Regression fixture",
       publishedAt: new Date("2026-07-12T08:00:00.000Z"),
@@ -61,6 +62,7 @@ describe("public editorial cache boundary", () => {
     expect(first[0]?.publishedAt).toBeInstanceOf(Date);
     expect(cached[0]?.publishedAt).toBeInstanceOf(Date);
     expect(cached[0]?.updatedAt).toBeInstanceOf(Date);
+    expect(cached[0]?.readingMinutes).toBe(1);
     expect(cached[0]?.publishedAt.toISOString()).toBe(
       publishedAt.toISOString(),
     );
