@@ -1,4 +1,5 @@
 name: VERIDIAN verified release
+run-name: VERIDIAN database seed and release
 
 on:
   push:
