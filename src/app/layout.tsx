@@ -6,7 +6,7 @@ import { env } from "@/env";
 import "./globals.css";
 
 const socialImage = {
-  url: "/opengraph-image.png",
+  url: "/veridian-social-v2.jpg",
   width: 1200,
   height: 630,
   alt: "VERIDIAN Moto — Mai mult drum.",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: defaultSiteSettings.defaultSeoTitle,
     description: defaultSiteSettings.defaultSeoDescription,
-    images: ["/twitter-image.png"],
+    images: ["/veridian-social-v2.jpg"],
   },
 };
 
