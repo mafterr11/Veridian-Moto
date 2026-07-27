@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Menu, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 
 import { BrandMark } from "@/components/layout/brand-mark";
+import { SiteMobileNav } from "@/components/layout/site-mobile-nav";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site";
-import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
   return (
@@ -34,39 +34,7 @@ export function SiteHeader() {
           </Link>
         </div>
 
-        <details className="group relative lg:hidden">
-          <summary
-            className={cn(
-              buttonVariants({ variant: "outline", size: "icon" }),
-              "list-none [&::-webkit-details-marker]:hidden",
-            )}
-            aria-label="Deschide meniul"
-          >
-            <Menu aria-hidden="true" />
-          </summary>
-          <div className="border-border bg-popover absolute top-[calc(100%+0.75rem)] right-0 w-[min(21rem,calc(100vw-2.5rem))] border p-3 shadow-2xl">
-            <nav className="flex flex-col" aria-label="Meniu mobil">
-              {siteConfig.navigation.map((item, index) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="border-border text-foreground hover:bg-muted flex items-center justify-between border-b px-3 py-4 font-semibold transition-colors"
-                >
-                  {item.label}
-                  <span className="text-muted-foreground text-xs">
-                    0{index + 1}
-                  </span>
-                </Link>
-              ))}
-              <Link
-                href="/configurator"
-                className={cn(buttonVariants(), "mt-3 w-full")}
-              >
-                Configurează
-              </Link>
-            </nav>
-          </div>
-        </details>
+        <SiteMobileNav />
       </div>
     </header>
   );

@@ -32,6 +32,41 @@ test("renders the VERIDIAN homepage and primary actions", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("closes the mobile menu so it never covers the page below", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const menu = page.locator("header details");
+  const trigger = page.getByLabel("Deschide meniul");
+
+  await trigger.click();
+  await expect(menu).toHaveJSProperty("open", true);
+
+  await page
+    .getByRole("navigation", { name: "Meniu mobil" })
+    .getByRole("link", { name: "Configurează" })
+    .click();
+  await page.waitForURL("**/configurator");
+  await expect(menu).toHaveJSProperty("open", false);
+
+  // Reopening on the page the menu already links to still closes on a tap.
+  await trigger.click();
+  await expect(menu).toHaveJSProperty("open", true);
+  await page
+    .getByRole("navigation", { name: "Meniu mobil" })
+    .getByRole("link", { name: /Modele/ })
+    .click();
+  await expect(menu).toHaveJSProperty("open", false);
+
+  // A closed menu leaves the model cards tappable on the first attempt.
+  await page.goto("/configurator");
+  const firstModel = page.locator("a[href^='/configurator/']").first();
+  await firstModel.click();
+  await expect(page).toHaveURL(/\/configurator\/[a-z0-9-]+$/);
+});
+
 test("filters the model catalogue through the URL", async ({ page }) => {
   await page.goto("/modele?category=Adventure&availability=available");
 
