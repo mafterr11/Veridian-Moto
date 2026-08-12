@@ -179,6 +179,7 @@ export async function getAdminModelEditor(id: string) {
       id: modelMedia.id,
       mediaId: mediaAssets.id,
       role: modelMedia.role,
+      optionChoiceId: modelMedia.optionChoiceId,
       viewAngle: modelMedia.viewAngle,
       sortOrder: modelMedia.sortOrder,
       storagePath: mediaAssets.storagePath,
@@ -220,6 +221,7 @@ export async function getAdminModelEditor(id: string) {
       isStandard: optionChoices.isStandard,
       sortOrder: optionChoices.sortOrder,
       status: optionChoices.status,
+      groupStatus: optionGroups.status,
     })
     .from(optionChoices)
     .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))

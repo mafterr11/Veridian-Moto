@@ -6,6 +6,10 @@ import {
 import { AdminActionForm } from "@/components/admin/action-form";
 import { AdminField } from "@/components/admin/form-field";
 import {
+  MediaPlacementFields,
+  type ConfiguratorChoiceItem,
+} from "@/components/admin/media-placement-fields";
+import {
   AdminEmptyState,
   AdminStatusBadge,
 } from "@/components/admin/status-badge";
@@ -15,18 +19,11 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 
-const mediaRoles = [
-  ["card", "Card catalog"],
-  ["hero", "Hero"],
-  ["gallery", "Galerie"],
-  ["configurator_base", "Bază configurator"],
-  ["configurator_overlay", "Overlay configurator"],
-] as const;
-
 type AssignedMedia = {
   id: string;
   mediaId: string;
   role: string;
+  optionChoiceId: string | null;
   viewAngle: string | null;
   sortOrder: number;
   storagePath: string;
@@ -47,11 +44,21 @@ export function ModelMediaEditor({
   modelId,
   assigned,
   library,
+  choices,
 }: {
   modelId: string;
   assigned: readonly AssignedMedia[];
   library: readonly MediaLibraryItem[];
+  choices: readonly ConfiguratorChoiceItem[];
 }) {
+  const availableChoices = choices.filter(
+    (choice) =>
+      choice.status !== "archived" && choice.groupStatus !== "archived",
+  );
+  const choiceNames = new Map(
+    choices.map((choice) => [choice.id, choice.name] as const),
+  );
+
   return (
     <div className="grid gap-6">
       {assigned.length === 0 ? (
@@ -83,6 +90,12 @@ export function ModelMediaEditor({
                 <p className="text-steel mt-1 text-xs">
                   {media.viewAngle || "fără unghi"} · ordinea {media.sortOrder}
                 </p>
+                {media.optionChoiceId ? (
+                  <p className="text-steel mt-1 text-xs">
+                    Opțiune:{" "}
+                    {choiceNames.get(media.optionChoiceId) ?? "indisponibilă"}
+                  </p>
+                ) : null}
                 <AdminActionForm
                   action={removeModelMediaAction.bind(null, media.id, modelId)}
                   submitLabel="Elimină asocierea"
@@ -134,7 +147,10 @@ export function ModelMediaEditor({
                   required
                 />
               </AdminField>
-              <MediaPlacementFields prefix={`${modelId}-upload`} />
+              <MediaPlacementFields
+                prefix={`${modelId}-upload`}
+                choices={availableChoices}
+              />
             </AdminActionForm>
           </div>
         </details>
@@ -168,7 +184,10 @@ export function ModelMediaEditor({
                     ))}
                   </NativeSelect>
                 </AdminField>
-                <MediaPlacementFields prefix={`${modelId}-existing`} />
+                <MediaPlacementFields
+                  prefix={`${modelId}-existing`}
+                  choices={availableChoices}
+                />
               </AdminActionForm>
             ) : (
               <AdminEmptyState>Biblioteca media este goală.</AdminEmptyState>
@@ -176,44 +195,6 @@ export function ModelMediaEditor({
           </div>
         </details>
       </div>
-    </div>
-  );
-}
-
-function MediaPlacementFields({ prefix }: { prefix: string }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      <AdminField label="Rol" htmlFor={`${prefix}-role`}>
-        <NativeSelect
-          id={`${prefix}-role`}
-          name="role"
-          defaultValue="gallery"
-          className="w-full"
-        >
-          {mediaRoles.map(([value, label]) => (
-            <NativeSelectOption key={value} value={value}>
-              {label}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-      </AdminField>
-      <AdminField label="Unghi" htmlFor={`${prefix}-angle`}>
-        <Input
-          id={`${prefix}-angle`}
-          name="viewAngle"
-          placeholder="front-three-quarter"
-        />
-      </AdminField>
-      <AdminField label="Ordine" htmlFor={`${prefix}-sort`}>
-        <Input
-          id={`${prefix}-sort`}
-          name="sortOrder"
-          type="number"
-          min={0}
-          defaultValue={0}
-          required
-        />
-      </AdminField>
     </div>
   );
 }

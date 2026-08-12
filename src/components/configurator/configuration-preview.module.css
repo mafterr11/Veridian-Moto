@@ -1,0 +1,51 @@
+.visualLayer {
+  transform: scale(1.055);
+  transform-origin: 67% center;
+}
+
+.highlightedLayer {
+  animation: visual-choice-highlight 800ms ease-out both;
+}
+
+.selectionNotice {
+  animation: visual-selection-notice 2.4s ease both;
+}
+
+@keyframes visual-choice-highlight {
+  0% {
+    filter: brightness(1.45) saturate(1.25)
+      drop-shadow(0 0 1.25rem rgb(35 224 166 / 65%));
+  }
+
+  100% {
+    filter: none;
+  }
+}
+
+@keyframes visual-selection-notice {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+
+  12%,
+  72% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlightedLayer {
+    animation-duration: 1ms;
+  }
+
+  .selectionNotice {
+    animation: none;
+  }
+}

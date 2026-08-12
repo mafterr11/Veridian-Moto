@@ -7,6 +7,7 @@ vi.mock("@/app/(public)/configurator/actions", () => ({
 
 import { ConfiguratorExperience } from "@/components/configurator/configurator-experience";
 import { terran900RallyConfigurator } from "@/domain/configurator/terran-900-rally";
+import type { ConfiguratorCatalogue } from "@/domain/configurator/types";
 
 const props = {
   catalogue: terran900RallyConfigurator,
@@ -80,5 +81,39 @@ describe("ConfiguratorExperience", () => {
     expect(
       screen.getByRole("button", { name: /Genți laterale Adventure/i }),
     ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("highlights a visual accessory when it is newly selected", () => {
+    const catalogue: ConfiguratorCatalogue = {
+      ...terran900RallyConfigurator,
+      visualMedia: [
+        {
+          role: "base",
+          image: "/images/configurator/terran-base.webp",
+          alt: "VERIDIAN Terran 900 Rally",
+          viewAngle: "front-three-quarter",
+          sortOrder: 0,
+        },
+        {
+          role: "overlay",
+          image: "/images/configurator/terran-touring-screen.webp",
+          alt: "Parbriz Touring",
+          viewAngle: "front-three-quarter",
+          optionChoiceId: "tall-screen",
+          sortOrder: 10,
+        },
+      ],
+    };
+    const { container } = render(
+      <ConfiguratorExperience {...props} catalogue={catalogue} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /6\. Accesorii/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Parbriz Touring/i }));
+
+    expect(
+      container.querySelector('[data-visual-choice-id="tall-screen"]'),
+    ).toHaveAttribute("data-highlighted", "true");
+    expect(screen.getByRole("status")).toHaveTextContent(/Parbriz Touring/i);
   });
 });

@@ -68,6 +68,39 @@ export class AdminMutationError extends Error {
   }
 }
 
+export async function assertValidModelMediaPlacement(
+  input: Pick<ModelMediaAssignmentInput, "modelId" | "role" | "optionChoiceId">,
+) {
+  if (!input.role.startsWith("configurator_")) return;
+
+  const availableChoices = await getDatabase()
+    .select({ id: optionChoices.id })
+    .from(optionChoices)
+    .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+    .where(
+      and(
+        eq(optionGroups.modelId, input.modelId),
+        ne(optionGroups.status, "archived"),
+        ne(optionChoices.status, "archived"),
+      ),
+    );
+
+  if (
+    input.optionChoiceId &&
+    !availableChoices.some(({ id }) => id === input.optionChoiceId)
+  ) {
+    throw new AdminMutationError(
+      "Opțiunea configuratorului nu există sau aparține altui model.",
+    );
+  }
+
+  if (input.role === "configurator_overlay" && !input.optionChoiceId) {
+    throw new AdminMutationError(
+      "Selectează opțiunea pe care o reprezintă overlay-ul configuratorului.",
+    );
+  }
+}
+
 export class PublicationValidationError extends AdminMutationError {
   constructor(public readonly issues: readonly PublicationIssue[]) {
     super(
@@ -499,6 +532,7 @@ export async function deleteOptionRule(id: string, modelId: string) {
 
 export async function assignModelMedia(input: ModelMediaAssignmentInput) {
   await assertAdmin();
+  await assertValidModelMediaPlacement(input);
   await getDatabase().transaction(async (tx) => {
     await tx.insert(modelMedia).values(input).onConflictDoNothing();
     await markModelDraftIfPublished(tx, input.modelId);

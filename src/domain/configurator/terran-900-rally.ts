@@ -6,6 +6,140 @@ export const terran900RallyConfigurator = {
   currency: "RON",
   basePriceMinor: 4_999_000,
   previewAngles: ["front-three-quarter"],
+  visualMedia: [
+    {
+      role: "base",
+      image: "/images/models/terran-900-rally-configurator-veridian-v2.webp",
+      alt: "VERIDIAN Terran 900 Rally în finisaj Veridian Green",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "color-veridian",
+      sortOrder: 0,
+    },
+    {
+      role: "base",
+      image: "/images/models/terran-900-rally-configurator-glacier-v2.webp",
+      alt: "VERIDIAN Terran 900 Rally în finisaj Glacier White",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "color-glacier",
+      sortOrder: 1,
+    },
+    {
+      role: "base",
+      image: "/images/models/terran-900-rally-configurator-ember-v2.webp",
+      alt: "VERIDIAN Terran 900 Rally în finisaj Ember Red",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "color-ember",
+      sortOrder: 2,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/navigation-mount-front-three-quarter.webp",
+      alt: "Suportul pentru telefon și navigație montat pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "navigation-mount",
+      sortOrder: 10,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/seat-low-front-three-quarter.webp",
+      alt: "Șaua joasă montată pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "seat-low",
+      sortOrder: 18,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/seat-comfort-front-three-quarter.webp",
+      alt: "Șa Comfort montată pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "seat-comfort",
+      sortOrder: 20,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/radiator-guard-front-three-quarter.webp",
+      alt: "Protecția radiatorului montată pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "radiator-guard",
+      sortOrder: 25,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/engine-bars-front-three-quarter.webp",
+      alt: "Bare de protecție motor montate pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "engine-bars",
+      sortOrder: 30,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/rally-protection-front-three-quarter.webp",
+      alt: "Kitul de protecție Rally montat pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "rally-protection",
+      sortOrder: 35,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/tall-screen-front-three-quarter.webp",
+      alt: "Parbriz Touring montat pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "tall-screen",
+      sortOrder: 40,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/luggage-rack-front-three-quarter.webp",
+      alt: "Cadrul modular de bagaje montat pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "luggage-rack",
+      sortOrder: 50,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/aluminium-cases-front-three-quarter.webp",
+      alt: "Cutiile laterale din aluminiu montate pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "aluminium-cases",
+      sortOrder: 60,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/soft-bags-front-three-quarter.webp",
+      alt: "Gențile laterale Adventure montate pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "soft-bags",
+      sortOrder: 61,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/top-case-front-three-quarter.webp",
+      alt: "Top case-ul de 42 de litri montat pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "top-case",
+      sortOrder: 65,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/passenger-comfort-front-three-quarter.webp",
+      alt: "Kitul de confort pentru pasager montat pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "passenger-comfort",
+      sortOrder: 70,
+    },
+  ],
   standardEquipment: [
     "Mânere încălzite",
     "Cruise control",
@@ -31,7 +165,8 @@ export const terran900RallyConfigurator = {
           priceDeltaMinor: 0,
           published: true,
           default: true,
-          image: "/images/models/terran-900-rally.webp",
+          image:
+            "/images/models/terran-900-rally-configurator-veridian-v2.webp",
           swatch: "#007A59",
           badge: "Standard",
         },
@@ -41,7 +176,7 @@ export const terran900RallyConfigurator = {
           shortDescription: "Alb perlat cu contrast tehnic graphite.",
           priceDeltaMinor: 79_000,
           published: true,
-          image: "/images/models/terran-900-rally-glacier.webp",
+          image: "/images/models/terran-900-rally-configurator-glacier-v2.webp",
           swatch: "#E8EBE7",
         },
         {
@@ -50,7 +185,7 @@ export const terran900RallyConfigurator = {
           shortDescription: "Roșu metalizat închis, controlat și sobru.",
           priceDeltaMinor: 79_000,
           published: true,
-          image: "/images/models/terran-900-rally-ember.webp",
+          image: "/images/models/terran-900-rally-configurator-ember-v2.webp",
           swatch: "#8F1726",
         },
       ],
@@ -226,7 +361,7 @@ export const terran900RallyConfigurator = {
           priceDeltaMinor: 119_000,
           published: true,
           requires: ["seat-comfort"],
-          excludes: ["seat-low"],
+          excludes: ["seat-low", "top-case"],
           badge: "Include șaua Comfort",
         },
         {

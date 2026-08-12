@@ -254,13 +254,44 @@ test("configures the Terran 900 Rally with rule feedback", async ({ page }) => {
   await expect(
     page.getByAltText("VERIDIAN Terran 900 Rally în finisaj Glacier White"),
   ).toBeVisible();
-  await expect(page.getByText(/55\.780/).first()).toBeVisible();
+  await expect(page.getByText(/50\.780/).first()).toBeVisible();
+
+  await page.getByRole("button", { name: /2\. Ergonomie/i }).click();
+  await page.getByRole("button", { name: /Șa Comfort 860 mm/i }).click();
+  await expect(
+    page.locator('[data-visual-choice-id="seat-comfort"]'),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: /4\. Protecție/i }).click();
   await page.getByRole("button", { name: /Kit protecție Rally/i }).click();
   await expect(
     page.getByText(/Bare protecție motor a fost adăugată automat/i),
   ).toBeVisible();
+  await expect(
+    page.locator('[data-visual-choice-id="engine-bars"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-visual-choice-id="rally-protection"]'),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /5\. Bagaje/i }).click();
+  await page.getByRole("button", { name: /Cutii laterale aluminium/i }).click();
+  await expect(
+    page.getByText(/Cadru modular bagaje a fost adăugată automat/i),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-visual-choice-id="luggage-rack"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-visual-choice-id="aluminium-cases"]'),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /6\. Accesorii/i }).click();
+  await page.getByRole("button", { name: /Parbriz Touring/i }).click();
+  await expect(
+    page.locator('[data-visual-choice-id="tall-screen"]'),
+  ).toBeVisible();
+  await expect(page.locator('[data-visual-role="overlay"]')).toHaveCount(6);
 });
 
 test("offers a working configurator for another initial model", async ({
@@ -273,8 +304,23 @@ test("offers a working configurator for another initial model", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: /Graphite Black/i }).click();
   await expect(
-    page.getByRole("button", { name: /Graphite Black/i }),
-  ).toHaveAttribute("aria-pressed", "true");
+    page.locator(
+      '[data-visual-role="base"][data-visual-choice-id="color-graphite"]',
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /2\. Ergonomie/i }).click();
+  await page.getByRole("button", { name: /Șa Comfort/i }).click();
+  await expect(
+    page.locator('[data-visual-choice-id="seat-comfort"]'),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /3\. Echipare/i }).click();
+  await page.getByRole("button", { name: /Set bagaje/i }).click();
+  await expect(
+    page.locator('[data-visual-choice-id="luggage-set"]'),
+  ).toBeVisible();
+
   await page.getByRole("button", { name: /4\. Sumar/i }).click();
   await expect(
     page.getByRole("button", { name: "Salvează și cere ofertă" }),

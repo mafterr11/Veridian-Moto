@@ -1,5 +1,14 @@
 export type SelectionMode = "single" | "multi";
 
+export type ConfiguratorVisualMedia = {
+  role: "base" | "overlay";
+  image: string;
+  alt: string;
+  viewAngle: string;
+  optionChoiceId?: string;
+  sortOrder: number;
+};
+
 export type ConfiguratorChoice = {
   id: string;
   code?: string;
@@ -33,6 +42,7 @@ export type ConfiguratorCatalogue = {
   currency: "RON";
   basePriceMinor: number;
   previewAngles: readonly string[];
+  visualMedia?: readonly ConfiguratorVisualMedia[];
   standardEquipment: readonly string[];
   groups: readonly ConfiguratorGroup[];
 };
