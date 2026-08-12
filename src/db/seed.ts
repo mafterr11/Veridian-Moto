@@ -286,6 +286,7 @@ async function seed() {
       for (const catalogue of demoConfiguratorCatalogues) {
         const modelId = modelIdsBySlug.get(catalogue.modelId);
         if (!modelId) continue;
+        const dimensions = imageDimensions(catalogue.modelId);
         const [existingGroup] = await tx
           .select({ id: optionGroups.id })
           .from(optionGroups)
@@ -322,8 +323,8 @@ async function seed() {
                   .values({
                     storagePath: choice.image,
                     mimeType: "image/webp",
-                    width: 1672,
-                    height: 941,
+                    width: dimensions.width,
+                    height: dimensions.height,
                     fileSizeBytes: 0,
                     altText: `VERIDIAN ${catalogue.modelName} — ${choice.name}`,
                   })

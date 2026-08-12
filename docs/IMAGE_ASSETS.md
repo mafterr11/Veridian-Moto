@@ -87,6 +87,40 @@ are software, sensor and control changes that do not justify inventing exterior
 hardware. Physical choices with a layer are labelled `Vizibil în imagine` in
 the configurator.
 
+## Full 2D configurator set
+
+The layered renderer is enabled for all eight catalogue models. Terran 900 Rally
+keeps its dedicated 1672 × 941 set; every other model uses an aligned 1448 × 1086
+front-three-quarter canvas under `public/images/configurator/<model-slug>/`.
+
+Each of the seven additional models has three selectable finish bases and five
+transparent physical-option overlays:
+
+| File pattern                               | Visual selection |
+| ------------------------------------------ | ---------------- |
+| `color-signature-front-three-quarter.webp` | Signature finish |
+| `color-graphite-front-three-quarter.webp`  | Graphite Black   |
+| `color-glacier-front-three-quarter.webp`   | Glacier White    |
+| `seat-comfort-front-three-quarter.webp`    | Comfort seat     |
+| `seat-low-front-three-quarter.webp`        | Low seat         |
+| `touring-pack-front-three-quarter.webp`    | Touring screen   |
+| `luggage-set-front-three-quarter.webp`     | Luggage system   |
+| `urban-pack-front-three-quarter.webp`      | Guards and mount |
+
+Where the original catalogue render already represents one selectable finish,
+that source image is reused as the aligned base instead of duplicating it.
+
+The built-in image-generation edit mode produced the finish variants with a
+strict preservation prompt: keep camera, motorcycle geometry, wheels, lighting,
+reflections and background unchanged; repaint only the existing factory-painted
+body panels; make the selected Signature green, Graphite Black or Glacier White
+finish broad and immediately readable. Accessory sprites used a component render
+prompt: one mechanically plausible, unbranded part or kit, matching the model
+family and front-three-quarter perspective, isolated on a uniform magenta key,
+with no motorcycle, rider, lettering, watermark, floor or shadow. The shared
+image helper converted those renders to alpha, after which deterministic placement
+normalized them to each model canvas.
+
 ## Accessory image set
 
 All 12 accessory renders use a consistent 3:2, 1536 × 1024 product-photography

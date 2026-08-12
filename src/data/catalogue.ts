@@ -41,7 +41,7 @@ export const demoModelMetadata: Record<string, DemoModelMetadata> = {
     seatHeightMm: 835,
     modelYear: 2026,
     tagline: "Echilibru dincolo de asfalt.",
-    configuratorEnabled: false,
+    configuratorEnabled: true,
   },
   "terran-900-rally": {
     seatHeightMm: 870,
@@ -53,37 +53,37 @@ export const demoModelMetadata: Record<string, DemoModelMetadata> = {
     seatHeightMm: 825,
     modelYear: 2026,
     tagline: "Precizie pentru lumea reală.",
-    configuratorEnabled: false,
+    configuratorEnabled: true,
   },
   "apex-900-rr": {
     seatHeightMm: 830,
     modelYear: 2026,
     tagline: "Performanță fără scuze.",
-    configuratorEnabled: false,
+    configuratorEnabled: true,
   },
   "rift-700": {
     seatHeightMm: 805,
     modelYear: 2026,
     tagline: "Orașul, pe ritmul tău.",
-    configuratorEnabled: false,
+    configuratorEnabled: true,
   },
   "meridian-900-gt": {
     seatHeightMm: 820,
     modelYear: 2026,
     tagline: "Mai mult drum într-o singură zi.",
-    configuratorEnabled: false,
+    configuratorEnabled: true,
   },
   "foundry-800": {
     seatHeightMm: 790,
     modelYear: 2026,
     tagline: "Caracter clasic. Răspuns modern.",
-    configuratorEnabled: false,
+    configuratorEnabled: true,
   },
   "volt-e2": {
     seatHeightMm: 795,
     modelYear: 2026,
     tagline: "Liniște la semafor. Energie după el.",
-    configuratorEnabled: false,
+    configuratorEnabled: true,
   },
 };
 

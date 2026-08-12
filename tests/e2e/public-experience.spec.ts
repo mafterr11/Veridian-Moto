@@ -304,8 +304,23 @@ test("offers a working configurator for another initial model", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: /Graphite Black/i }).click();
   await expect(
-    page.getByRole("button", { name: /Graphite Black/i }),
-  ).toHaveAttribute("aria-pressed", "true");
+    page.locator(
+      '[data-visual-role="base"][data-visual-choice-id="color-graphite"]',
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /2\. Ergonomie/i }).click();
+  await page.getByRole("button", { name: /Șa Comfort/i }).click();
+  await expect(
+    page.locator('[data-visual-choice-id="seat-comfort"]'),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /3\. Echipare/i }).click();
+  await page.getByRole("button", { name: /Set bagaje/i }).click();
+  await expect(
+    page.locator('[data-visual-choice-id="luggage-set"]'),
+  ).toBeVisible();
+
   await page.getByRole("button", { name: /4\. Sumar/i }).click();
   await expect(
     page.getByRole("button", { name: "Salvează și cere ofertă" }),
