@@ -385,6 +385,70 @@ async function seed() {
         }
       }
 
+      for (const catalogue of demoConfiguratorCatalogues) {
+        if (!catalogue.visualMedia?.length) continue;
+
+        const modelId = modelIdsBySlug.get(catalogue.modelId);
+        if (!modelId) continue;
+
+        const storedChoices = await tx
+          .select({ id: optionChoices.id, code: optionChoices.code })
+          .from(optionChoices)
+          .innerJoin(optionGroups, eq(optionChoices.groupId, optionGroups.id))
+          .where(eq(optionGroups.modelId, modelId));
+        const choiceIdsByCode = new Map(
+          storedChoices.map((choice) => [choice.code, choice.id] as const),
+        );
+        const dimensions = imageDimensions(catalogue.modelId);
+
+        for (const visual of catalogue.visualMedia) {
+          const optionChoiceId = visual.optionChoiceId
+            ? choiceIdsByCode.get(visual.optionChoiceId)
+            : undefined;
+          if (visual.optionChoiceId && !optionChoiceId) continue;
+
+          let mediaId = mediaIdsByPath.get(visual.image);
+          if (!mediaId) {
+            const [media] = await tx
+              .insert(mediaAssets)
+              .values({
+                storagePath: visual.image,
+                mimeType: "image/webp",
+                ...dimensions,
+                fileSizeBytes: 0,
+                altText: visual.alt,
+              })
+              .onConflictDoUpdate({
+                target: mediaAssets.storagePath,
+                set: {
+                  mimeType: "image/webp",
+                  ...dimensions,
+                  altText: visual.alt,
+                  updatedAt: new Date(),
+                },
+              })
+              .returning({ id: mediaAssets.id });
+            mediaId = media.id;
+            mediaIdsByPath.set(visual.image, media.id);
+          }
+
+          await tx
+            .insert(modelMedia)
+            .values({
+              modelId,
+              mediaId,
+              role:
+                visual.role === "base"
+                  ? "configurator_base"
+                  : "configurator_overlay",
+              optionChoiceId,
+              viewAngle: visual.viewAngle,
+              sortOrder: visual.sortOrder,
+            })
+            .onConflictDoNothing();
+        }
+      }
+
       const accessoryCategoryIds = new Map<string, string>();
       for (const [index, name] of [
         ...new Set(demoAccessories.map((item) => item.category)),

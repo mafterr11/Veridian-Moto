@@ -153,6 +153,7 @@ async function loadPublicConfigurator(
       path: mediaAssets.storagePath,
       alt: mediaAssets.altText,
       role: modelMedia.role,
+      optionChoiceId: modelMedia.optionChoiceId,
       viewAngle: modelMedia.viewAngle,
       sortOrder: modelMedia.sortOrder,
     })
@@ -172,18 +173,29 @@ async function loadPublicConfigurator(
     target.set(rule.sourceChoiceId, values);
   }
 
+  const visualMedia = media
+    .filter(
+      (item) =>
+        (item.role === "configurator_base" ||
+          item.role === "configurator_overlay") &&
+        (!item.optionChoiceId || choiceIds.has(item.optionChoiceId)),
+    )
+    .map((item) => ({
+      role: item.role === "configurator_base" ? "base" : "overlay",
+      image: item.path,
+      alt: item.alt,
+      viewAngle: item.viewAngle ?? "front-three-quarter",
+      optionChoiceId: item.optionChoiceId ?? undefined,
+      sortOrder: item.sortOrder,
+    })) satisfies NonNullable<ConfiguratorCatalogue["visualMedia"]>;
+
   const catalogue: ConfiguratorCatalogue = {
     modelId: model.id,
     modelName: model.name,
     currency: "RON",
     basePriceMinor: model.basePriceMinor,
-    previewAngles: [
-      ...new Set(
-        media
-          .map((item) => item.viewAngle)
-          .filter((value): value is string => Boolean(value)),
-      ),
-    ],
+    previewAngles: [...new Set(visualMedia.map((item) => item.viewAngle))],
+    visualMedia,
     standardEquipment: features.map((feature) =>
       feature.value ? `${feature.label}: ${feature.value}` : feature.label,
     ),
@@ -215,6 +227,9 @@ async function loadPublicConfigurator(
     })),
   };
   const hero =
+    media.find(
+      (item) => item.role === "configurator_base" && !item.optionChoiceId,
+    ) ??
     media.find((item) => item.role === "configurator_base") ??
     media.find((item) => item.role === "hero") ??
     media.find((item) => item.role === "card");

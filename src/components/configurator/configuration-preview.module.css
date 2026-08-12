@@ -1,0 +1,25 @@
+.visualLayer {
+  transform: scale(1.055);
+  transform-origin: 67% center;
+}
+
+.highlightedLayer {
+  animation: visual-choice-highlight 800ms ease-out both;
+}
+
+@keyframes visual-choice-highlight {
+  0% {
+    filter: brightness(1.45) saturate(1.25)
+      drop-shadow(0 0 1.25rem rgb(35 224 166 / 65%));
+  }
+
+  100% {
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlightedLayer {
+    animation-duration: 1ms;
+  }
+}

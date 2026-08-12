@@ -16,7 +16,10 @@ import {
   motorcycleModels,
 } from "@/db/schema";
 import { assertAdmin } from "@/data/auth/admin-session";
-import { AdminMutationError } from "@/data/mutations/admin-catalogue";
+import {
+  AdminMutationError,
+  assertValidModelMediaPlacement,
+} from "@/data/mutations/admin-catalogue";
 import {
   revalidateAccessoryCatalogue,
   revalidateDiscoverContent,
@@ -132,6 +135,7 @@ export async function uploadAndAssignModelImage(
   file: File,
 ) {
   await assertAdmin();
+  await assertValidModelMediaPlacement(input);
   const normalized = await normalizeImage(file);
   const objectPath = `models/${input.modelId}/${randomUUID()}.webp`;
   const supabase = await createSupabaseServerClient();
@@ -172,6 +176,7 @@ export async function uploadAndAssignModelImage(
         modelId: input.modelId,
         mediaId: media.id,
         role: input.role,
+        optionChoiceId: input.optionChoiceId,
         viewAngle: input.viewAngle,
         sortOrder: input.sortOrder,
       });

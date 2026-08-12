@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import {
@@ -12,11 +11,14 @@ import {
   ChevronDown,
   CircleGauge,
   Info,
-  RotateCw,
   ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
 
+import {
+  ConfigurationPreview,
+  type VisualSelectionSignal,
+} from "@/components/configurator/configuration-preview";
 import { buttonVariants } from "@/components/ui/button";
 import {
   saveConfigurationAction,
@@ -59,6 +61,9 @@ export function ConfiguratorExperience({
   );
   const [activeStep, setActiveStep] = useState(0);
   const [notices, setNotices] = useState<readonly RuleNotice[]>([]);
+  const [visualSelectionSignal, setVisualSelectionSignal] = useState<
+    VisualSelectionSignal | undefined
+  >();
   const steps = useMemo(
     () => [
       ...catalogue.groups.map((group) => ({
@@ -85,16 +90,6 @@ export function ConfiguratorExperience({
       ) ?? catalogue.groups[0],
     [catalogue.groups],
   );
-  const selectedFinishId = finishGroup
-    ? configuration.selectedByGroup[finishGroup.id]?.[0]
-    : undefined;
-  const selectedFinish = finishGroup?.choices.find(
-    (choice) => choice.id === selectedFinishId,
-  );
-  const previewChoices =
-    finishGroup?.choices.filter((choice) => choice.image) ?? [];
-  const hasDistinctPreviewImages =
-    new Set(previewChoices.map((choice) => choice.image)).size > 1;
   const step = steps[activeStep]!;
   const progress = ((activeStep + 1) / steps.length) * 100;
 
@@ -108,8 +103,34 @@ export function ConfiguratorExperience({
       shouldSelect,
     );
 
-    if (result.accepted) setConfiguration(result.state);
+    if (result.accepted) {
+      const visualChoiceIds = new Set(
+        (catalogue.visualMedia ?? [])
+          .map((media) => media.optionChoiceId)
+          .filter((choiceId): choiceId is string => Boolean(choiceId)),
+      );
+      const newlySelectedVisualChoiceIds = Object.values(
+        result.state.selectedByGroup,
+      )
+        .flat()
+        .filter(
+          (choiceId) =>
+            !selectedIds.has(choiceId) && visualChoiceIds.has(choiceId),
+        );
+
+      setConfiguration(result.state);
+      if (newlySelectedVisualChoiceIds.length) {
+        setVisualSelectionSignal((current) => ({
+          choiceIds: newlySelectedVisualChoiceIds,
+          revision: (current?.revision ?? 0) + 1,
+        }));
+      }
+    }
     setNotices(result.notices);
+  }
+
+  function handleViewAngleChange(viewAngle: string) {
+    setConfiguration((current) => ({ ...current, previewAngle: viewAngle }));
   }
 
   function goToStep(index: number) {
@@ -121,72 +142,28 @@ export function ConfiguratorExperience({
     <main className="bg-porcelain text-obsidian">
       <div className="lg:grid lg:min-h-[calc(100svh-5rem)] lg:grid-cols-[minmax(0,1.45fr)_minmax(25rem,0.9fr)]">
         <section className="relative min-h-[48svh] overflow-hidden bg-[#080a0a] lg:sticky lg:top-20 lg:h-[calc(100svh-5rem)]">
-          <div className="absolute inset-0">
-            {hasDistinctPreviewImages ? (
-              previewChoices.map((choice) => (
-                <Image
-                  key={choice.id}
-                  src={choice.image!}
-                  alt={
-                    choice.id === selectedFinishId
-                      ? `VERIDIAN ${catalogue.modelName} în finisaj ${choice.name}`
-                      : ""
-                  }
-                  fill
-                  priority={choice.id === selectedFinishId}
-                  loading={choice.id === selectedFinishId ? "eager" : "lazy"}
-                  sizes="(min-width: 1024px) 62vw, 100vw"
-                  aria-hidden={choice.id !== selectedFinishId}
-                  className={cn(
-                    "object-cover object-[67%_center] transition-opacity duration-300 motion-reduce:transition-none",
-                    choice.id === selectedFinishId
-                      ? "opacity-100"
-                      : "opacity-0",
-                  )}
-                />
-              ))
-            ) : (
-              <Image
-                src={previewChoices[0]?.image ?? model.image}
-                alt={
-                  selectedFinish
-                    ? `VERIDIAN ${catalogue.modelName} în finisaj ${selectedFinish.name}`
-                    : model.imageAlt
-                }
-                fill
-                priority
-                loading="eager"
-                sizes="(min-width: 1024px) 62vw, 100vw"
-                className="object-cover object-[67%_center]"
-              />
-            )}
-          </div>
+          <ConfigurationPreview
+            catalogue={catalogue}
+            configuration={configuration}
+            fallbackImage={model.image}
+            fallbackImageAlt={model.imageAlt}
+            onViewAngleChange={handleViewAngleChange}
+            selectionSignal={visualSelectionSignal}
+          />
           <div
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35"
             aria-hidden="true"
           />
 
-          <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-4 p-4 sm:p-6 lg:p-8">
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center gap-4 p-4 sm:p-6 lg:p-8">
             <Link
               href="/configurator"
-              className="flex items-center gap-2 text-sm font-bold text-white"
+              className="pointer-events-auto flex items-center gap-2 text-sm font-bold text-white"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
               <span className="hidden sm:inline">Schimbă modelul</span>
               <span className="sm:hidden">Modele</span>
             </Link>
-            <div className="flex items-center gap-2">
-              <span className="border border-white/20 bg-black/30 px-3 py-2 text-[0.65rem] font-bold tracking-wide text-white uppercase backdrop-blur">
-                3/4 față
-              </span>
-              <span
-                className="border border-white/20 bg-black/30 p-2 text-white/45 backdrop-blur"
-                role="img"
-                aria-label="Un singur unghi disponibil în această etapă"
-              >
-                <RotateCw className="size-4" aria-hidden="true" />
-              </span>
-            </div>
           </div>
 
           <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6 lg:p-8">

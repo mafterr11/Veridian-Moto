@@ -416,31 +416,63 @@ export function openingHoursFromForm(formData: FormData) {
   );
 }
 
-export const modelMediaAssignmentSchema = z.object({
-  modelId: uuid,
-  mediaId: uuid,
-  role: z.enum([
-    "card",
-    "hero",
-    "gallery",
-    "configurator_base",
-    "configurator_overlay",
-  ]),
-  viewAngle: optionalText(80),
-  sortOrder: requiredInteger("Ordinea nu este validă."),
-});
+const modelMediaRoleSchema = z.enum([
+  "card",
+  "hero",
+  "gallery",
+  "configurator_base",
+  "configurator_overlay",
+]);
 
-export const uploadImageSchema = z.object({
-  modelId: uuid,
-  altText: z
-    .string()
-    .trim()
-    .min(5, "Textul alternativ este obligatoriu.")
-    .max(500),
-  role: modelMediaAssignmentSchema.shape.role,
-  viewAngle: optionalText(80),
-  sortOrder: requiredInteger("Ordinea nu este validă."),
-});
+function validateModelMediaOptionLink(
+  value: {
+    role: z.infer<typeof modelMediaRoleSchema>;
+    optionChoiceId?: string;
+  },
+  context: z.RefinementCtx,
+) {
+  if (value.role === "configurator_overlay" && !value.optionChoiceId) {
+    context.addIssue({
+      code: "custom",
+      path: ["optionChoiceId"],
+      message: "Selectează opțiunea reprezentată de overlay.",
+    });
+  }
+
+  if (!value.role.startsWith("configurator_") && value.optionChoiceId) {
+    context.addIssue({
+      code: "custom",
+      path: ["optionChoiceId"],
+      message: "O opțiune poate fi asociată numai imaginilor configuratorului.",
+    });
+  }
+}
+
+export const modelMediaAssignmentSchema = z
+  .object({
+    modelId: uuid,
+    mediaId: uuid,
+    role: modelMediaRoleSchema,
+    optionChoiceId: optionalUuid,
+    viewAngle: optionalText(80),
+    sortOrder: requiredInteger("Ordinea nu este validă."),
+  })
+  .superRefine(validateModelMediaOptionLink);
+
+export const uploadImageSchema = z
+  .object({
+    modelId: uuid,
+    altText: z
+      .string()
+      .trim()
+      .min(5, "Textul alternativ este obligatoriu.")
+      .max(500),
+    role: modelMediaRoleSchema,
+    optionChoiceId: optionalUuid,
+    viewAngle: optionalText(80),
+    sortOrder: requiredInteger("Ordinea nu este validă."),
+  })
+  .superRefine(validateModelMediaOptionLink);
 
 export const accessoryMediaAssignmentSchema = z.object({
   accessoryId: uuid,

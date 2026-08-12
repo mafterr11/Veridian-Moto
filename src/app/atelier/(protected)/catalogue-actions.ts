@@ -454,6 +454,7 @@ export async function assignModelMediaAction(
     modelId: field(formData, "modelId"),
     mediaId: field(formData, "mediaId"),
     role: field(formData, "role"),
+    optionChoiceId: optionalField(formData, "optionChoiceId"),
     viewAngle: field(formData, "viewAngle"),
     sortOrder: field(formData, "sortOrder"),
   });
@@ -497,6 +498,7 @@ export async function uploadModelMediaAction(
     modelId: field(formData, "modelId"),
     altText: field(formData, "altText"),
     role: field(formData, "role"),
+    optionChoiceId: optionalField(formData, "optionChoiceId"),
     viewAngle: field(formData, "viewAngle"),
     sortOrder: field(formData, "sortOrder"),
   });

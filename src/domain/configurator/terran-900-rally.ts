@@ -6,6 +6,59 @@ export const terran900RallyConfigurator = {
   currency: "RON",
   basePriceMinor: 4_999_000,
   previewAngles: ["front-three-quarter"],
+  visualMedia: [
+    {
+      role: "base",
+      image: "/images/models/terran-900-rally-configurator-veridian-v2.webp",
+      alt: "VERIDIAN Terran 900 Rally în finisaj Veridian Green",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "color-veridian",
+      sortOrder: 0,
+    },
+    {
+      role: "base",
+      image: "/images/models/terran-900-rally-configurator-glacier-v2.webp",
+      alt: "VERIDIAN Terran 900 Rally în finisaj Glacier White",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "color-glacier",
+      sortOrder: 1,
+    },
+    {
+      role: "base",
+      image: "/images/models/terran-900-rally-configurator-ember-v2.webp",
+      alt: "VERIDIAN Terran 900 Rally în finisaj Ember Red",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "color-ember",
+      sortOrder: 2,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/seat-comfort-front-three-quarter.webp",
+      alt: "Șa Comfort montată pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "seat-comfort",
+      sortOrder: 20,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/engine-bars-front-three-quarter.webp",
+      alt: "Bare de protecție motor montate pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "engine-bars",
+      sortOrder: 30,
+    },
+    {
+      role: "overlay",
+      image:
+        "/images/configurator/terran-900-rally/tall-screen-front-three-quarter.webp",
+      alt: "Parbriz Touring montat pe Terran 900 Rally",
+      viewAngle: "front-three-quarter",
+      optionChoiceId: "tall-screen",
+      sortOrder: 40,
+    },
+  ],
   standardEquipment: [
     "Mânere încălzite",
     "Cruise control",
@@ -31,7 +84,8 @@ export const terran900RallyConfigurator = {
           priceDeltaMinor: 0,
           published: true,
           default: true,
-          image: "/images/models/terran-900-rally.webp",
+          image:
+            "/images/models/terran-900-rally-configurator-veridian-v2.webp",
           swatch: "#007A59",
           badge: "Standard",
         },
@@ -41,7 +95,7 @@ export const terran900RallyConfigurator = {
           shortDescription: "Alb perlat cu contrast tehnic graphite.",
           priceDeltaMinor: 79_000,
           published: true,
-          image: "/images/models/terran-900-rally-glacier.webp",
+          image: "/images/models/terran-900-rally-configurator-glacier-v2.webp",
           swatch: "#E8EBE7",
         },
         {
@@ -50,7 +104,7 @@ export const terran900RallyConfigurator = {
           shortDescription: "Roșu metalizat închis, controlat și sobru.",
           priceDeltaMinor: 79_000,
           published: true,
-          image: "/images/models/terran-900-rally-ember.webp",
+          image: "/images/models/terran-900-rally-configurator-ember-v2.webp",
           swatch: "#8F1726",
         },
       ],

@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   discoverPostSchema,
   inventorySchema,
+  modelMediaAssignmentSchema,
   optionGroupSchema,
   parseMoneyToMinor,
   siteSettingsSchema,
+  uploadImageSchema,
 } from "@/domain/admin/schemas";
 
 describe("admin form validation", () => {
@@ -35,6 +37,50 @@ describe("admin form validation", () => {
         expect.arrayContaining(["minSelected", "maxSelected"]),
       );
     }
+  });
+
+  it("accepts option-linked configurator media and rejects links on gallery media", () => {
+    const base = {
+      modelId: "550e8400-e29b-41d4-a716-446655440000",
+      mediaId: "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
+      optionChoiceId: "6ba7b811-9dad-41d1-80b4-00c04fd430c8",
+      viewAngle: "front-three-quarter",
+      sortOrder: "0",
+    };
+
+    expect(
+      modelMediaAssignmentSchema.safeParse({
+        ...base,
+        role: "configurator_overlay",
+      }).success,
+    ).toBe(true);
+    expect(
+      modelMediaAssignmentSchema.safeParse({
+        ...base,
+        role: "gallery",
+      }).success,
+    ).toBe(false);
+    expect(
+      modelMediaAssignmentSchema.safeParse({
+        ...base,
+        optionChoiceId: "",
+        role: "configurator_overlay",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("keeps the option link when validating an uploaded configurator image", () => {
+    const optionChoiceId = "6ba7b811-9dad-41d1-80b4-00c04fd430c8";
+    const parsed = uploadImageSchema.parse({
+      modelId: "550e8400-e29b-41d4-a716-446655440000",
+      altText: "Overlay transparent pentru parbriz Touring",
+      role: "configurator_overlay",
+      optionChoiceId,
+      viewAngle: "front-three-quarter",
+      sortOrder: "2",
+    });
+
+    expect(parsed.optionChoiceId).toBe(optionChoiceId);
   });
 
   it("normalizes and validates private VIN input", () => {

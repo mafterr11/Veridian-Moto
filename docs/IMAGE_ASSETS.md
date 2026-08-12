@@ -40,6 +40,33 @@ The two Terran configurator variants are deliberate exceptions: aligned colour
 edits are required so switching finish does not make the motorcycle jump between
 different compositions.
 
+## Layered Terran configurator pilot
+
+The Terran 900 Rally configurator uses a second, non-destructive set of aligned
+assets. The original catalogue and campaign images remain unchanged.
+
+The three `*-configurator-*-v2.webp` bases preserve the same 1672 × 941 camera and
+scene. Compared with the original variants, the selected finish covers the tank,
+upper and lower side fairings, radiator shrouds, tail panels, and a restrained
+section of the front fender. This makes each colour readable without changing the
+motorcycle geometry or mechanical surfaces.
+
+The files under `public/images/configurator/terran-900-rally/` are transparent
+1672 × 941 WebP overlays aligned to the same front three-quarter canvas:
+
+| File                                    | Selected option        |
+| --------------------------------------- | ---------------------- |
+| `seat-comfort-front-three-quarter.webp` | Comfort seat           |
+| `engine-bars-front-three-quarter.webp`  | Engine protection bars |
+| `tall-screen-front-three-quarter.webp`  | Touring windscreen     |
+
+The built-in image-generation workflow produced each isolated component on a flat
+magenta key background using the original Terran render and the corresponding
+accessory product image as references. The installed perspective and cool
+blue-hour material response were required explicitly. The repository image helper
+then removed the key colour, and deterministic placement normalized every final
+overlay to the shared canvas. Temporary composite previews are not shipped.
+
 ## Accessory image set
 
 All 12 accessory renders use a consistent 3:2, 1536 × 1024 product-photography

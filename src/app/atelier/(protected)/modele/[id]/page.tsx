@@ -121,6 +121,7 @@ async function ModelEditor({ params }: { params: Params }) {
             modelId={model.id}
             assigned={workspace.media}
             library={workspace.mediaLibrary}
+            choices={workspace.choices}
           />
         </AdminSection>
 
