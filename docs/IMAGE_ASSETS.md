@@ -54,11 +54,20 @@ motorcycle geometry or mechanical surfaces.
 The files under `public/images/configurator/terran-900-rally/` are transparent
 1672 × 941 WebP overlays aligned to the same front three-quarter canvas:
 
-| File                                    | Selected option        |
-| --------------------------------------- | ---------------------- |
-| `seat-comfort-front-three-quarter.webp` | Comfort seat           |
-| `engine-bars-front-three-quarter.webp`  | Engine protection bars |
-| `tall-screen-front-three-quarter.webp`  | Touring windscreen     |
+| File                                         | Selected option         |
+| -------------------------------------------- | ----------------------- |
+| `seat-comfort-front-three-quarter.webp`      | Comfort seat            |
+| `engine-bars-front-three-quarter.webp`       | Engine protection bars  |
+| `tall-screen-front-three-quarter.webp`       | Touring windscreen      |
+| `seat-low-front-three-quarter.webp`          | Low seat                |
+| `radiator-guard-front-three-quarter.webp`    | Radiator guard          |
+| `rally-protection-front-three-quarter.webp`  | Rally engine protection |
+| `luggage-rack-front-three-quarter.webp`      | Modular luggage rack    |
+| `aluminium-cases-front-three-quarter.webp`   | Aluminium side cases    |
+| `soft-bags-front-three-quarter.webp`         | Adventure soft bags     |
+| `top-case-front-three-quarter.webp`          | 42 L top case           |
+| `passenger-comfort-front-three-quarter.webp` | Passenger comfort kit   |
+| `navigation-mount-front-three-quarter.webp`  | Phone/navigation mount  |
 
 The built-in image-generation workflow produced each isolated component on a flat
 magenta key background using the original Terran render and the corresponding
@@ -66,6 +75,17 @@ accessory product image as references. The installed perspective and cool
 blue-hour material response were required explicitly. The repository image helper
 then removed the key colour, and deterministic placement normalized every final
 overlay to the shared canvas. Temporary composite previews are not shipped.
+
+The expanded local set follows the same workflow. Each component is generated
+as an isolated installed part on a flat magenta key, converted to alpha WebP,
+then cropped and positioned deterministically on the shared canvas. Existing
+accessory catalogue renders are used as material and construction references
+where one exists.
+
+Technology packages remain intentionally non-visual: their selectable features
+are software, sensor and control changes that do not justify inventing exterior
+hardware. Physical choices with a layer are labelled `Vizibil în imagine` in
+the configurator.
 
 ## Accessory image set
 

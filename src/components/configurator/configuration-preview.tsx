@@ -91,6 +91,9 @@ export function ConfigurationPreview({
     .join("; ");
   const highlighted = new Set(selectionSignal?.choiceIds ?? []);
   const highlightRevision = selectionSignal?.revision ?? 0;
+  const updatedChoiceNames = (selectionSignal?.choiceIds ?? [])
+    .map((choiceId) => choiceNames.get(choiceId))
+    .filter((name): name is string => Boolean(name));
 
   return (
     <>
@@ -191,6 +194,19 @@ export function ConfigurationPreview({
       >
         Previzualizare actualizată: {visualSummary}.
       </p>
+
+      {updatedChoiceNames.length ? (
+        <div
+          key={highlightRevision}
+          className={cn(
+            "border-veridian/60 absolute top-16 right-4 z-20 max-w-[min(22rem,75vw)] border bg-black/75 px-3 py-2 text-right text-[0.65rem] font-bold tracking-wide text-white uppercase shadow-xl backdrop-blur sm:right-6 lg:right-8",
+            styles.selectionNotice,
+          )}
+          aria-hidden="true"
+        >
+          Actualizat în imagine · {updatedChoiceNames.join(", ")}
+        </div>
+      ) : null}
 
       <div className="absolute top-0 right-0 z-20 p-4 sm:p-6 lg:p-8">
         {catalogue.visualMedia?.length && angles.length > 1 ? (

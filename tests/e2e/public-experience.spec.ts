@@ -270,13 +270,28 @@ test("configures the Terran 900 Rally with rule feedback", async ({ page }) => {
   await expect(
     page.locator('[data-visual-choice-id="engine-bars"]'),
   ).toBeVisible();
+  await expect(
+    page.locator('[data-visual-choice-id="rally-protection"]'),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /5\. Bagaje/i }).click();
+  await page.getByRole("button", { name: /Cutii laterale aluminium/i }).click();
+  await expect(
+    page.getByText(/Cadru modular bagaje a fost adăugată automat/i),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-visual-choice-id="luggage-rack"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-visual-choice-id="aluminium-cases"]'),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: /6\. Accesorii/i }).click();
   await page.getByRole("button", { name: /Parbriz Touring/i }).click();
   await expect(
     page.locator('[data-visual-choice-id="tall-screen"]'),
   ).toBeVisible();
-  await expect(page.locator('[data-visual-role="overlay"]')).toHaveCount(3);
+  await expect(page.locator('[data-visual-role="overlay"]')).toHaveCount(6);
 });
 
 test("offers a working configurator for another initial model", async ({

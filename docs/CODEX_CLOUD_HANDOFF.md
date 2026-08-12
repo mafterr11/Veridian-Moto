@@ -1,5 +1,10 @@
 # Codex Cloud handoff — configurator 2D
 
+> Historical note: the Cloud handoff was cancelled on 2026-08-12 and work
+> continued locally. The authoritative visual inventory is now
+> `docs/IMAGE_ASSETS.md` and `terran-900-rally.ts`; the six files below describe
+> only the original pilot set.
+
 ## Scope
 
 - Branch de continuare: `codex/configurator-2d`.

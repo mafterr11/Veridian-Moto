@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleGauge,
+  Eye,
   Info,
   ShieldCheck,
   SlidersHorizontal,
@@ -64,6 +65,15 @@ export function ConfiguratorExperience({
   const [visualSelectionSignal, setVisualSelectionSignal] = useState<
     VisualSelectionSignal | undefined
   >();
+  const visualChoiceIds = useMemo(
+    () =>
+      new Set(
+        (catalogue.visualMedia ?? [])
+          .map((media) => media.optionChoiceId)
+          .filter((choiceId): choiceId is string => Boolean(choiceId)),
+      ),
+    [catalogue.visualMedia],
+  );
   const steps = useMemo(
     () => [
       ...catalogue.groups.map((group) => ({
@@ -104,11 +114,6 @@ export function ConfiguratorExperience({
     );
 
     if (result.accepted) {
-      const visualChoiceIds = new Set(
-        (catalogue.visualMedia ?? [])
-          .map((media) => media.optionChoiceId)
-          .filter((choiceId): choiceId is string => Boolean(choiceId)),
-      );
       const newlySelectedVisualChoiceIds = Object.values(
         result.state.selectedByGroup,
       )
@@ -319,6 +324,7 @@ export function ConfiguratorExperience({
                               group={group}
                               choice={choice}
                               selected={selectedIds.has(choice.id)}
+                              visual={visualChoiceIds.has(choice.id)}
                               onSelect={() => handleChoice(group, choice)}
                             />
                           ))}
@@ -426,11 +432,13 @@ function OptionCard({
   group,
   choice,
   selected,
+  visual,
   onSelect,
 }: {
   group: ConfiguratorGroup;
   choice: ConfiguratorChoice;
   selected: boolean;
+  visual: boolean;
   onSelect: () => void;
 }) {
   const included = choice.priceDeltaMinor === 0;
@@ -492,6 +500,12 @@ function OptionCard({
         {choice.badge ? (
           <span className="text-veridian-dark mt-2 inline-flex text-[0.65rem] font-bold tracking-wide uppercase">
             {choice.badge}
+          </span>
+        ) : null}
+        {visual ? (
+          <span className="text-veridian-dark mt-2 flex items-center gap-1.5 text-[0.65rem] font-bold tracking-wide uppercase">
+            <Eye className="size-3.5" aria-hidden="true" />
+            Vizibil în imagine
           </span>
         ) : null}
       </span>
