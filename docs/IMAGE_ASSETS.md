@@ -51,9 +51,8 @@ upper and lower side fairings, radiator shrouds, tail panels, and a restrained
 section of the front fender. This makes each colour readable without changing the
 motorcycle geometry or mechanical surfaces.
 
-The files under `public/images/configurator/terran-900-rally/` are rejected
-transparent-overlay prototypes. They remain available for comparison, but are
-not approved for the live catalogue or demo fallback:
+The files under `public/images/configurator/terran-900-rally/` are approved
+transparent overlays extracted from edits of the exact motorcycle base:
 
 | File                                         | Selected option         |
 | -------------------------------------------- | ----------------------- |
@@ -70,9 +69,10 @@ not approved for the live catalogue or demo fallback:
 | `passenger-comfort-front-three-quarter.webp` | Passenger comfort kit   |
 | `navigation-mount-front-three-quarter.webp`  | Phone/navigation mount  |
 
-These prototypes were generated as isolated components and positioned
-deterministically. That workflow is retired because it cannot guarantee scale,
-perspective, mounting geometry or consistent lighting.
+Each component was first rendered already mounted on the motorcycle, then
+extracted as a full-canvas transparent WebP. The retired isolated-product
+workflow is not used because it cannot guarantee scale, perspective, mounting
+geometry or consistent lighting.
 
 Technology packages remain intentionally non-visual: their selectable features
 are software, sensor and control changes that do not justify inventing exterior
@@ -81,37 +81,36 @@ hardware. Only choices backed by approved visual media are labelled
 
 ## 2D configurator status
 
-The layered renderer remains available for all eight catalogue models, but only
-the aligned full-frame finish bases are currently approved for publication.
-Terran 900 Rally keeps its dedicated 1672 × 941 set; every other model uses an
-aligned 1448 × 1086 front-three-quarter canvas.
+The layered renderer is approved for all eight catalogue models. Terran 900
+Rally keeps its dedicated 1672 × 941 set; every other model uses an aligned
+1448 × 1086 front-three-quarter canvas. Every overlay retains the full canvas
+and alpha transparency so it stays registered through responsive crops.
 
-The following generated files remain in the repository as working prototypes:
+The standard seven-model asset set uses the following approved files:
 
-| File pattern                               | Status             |
-| ------------------------------------------ | ------------------ |
-| `color-signature-front-three-quarter.webp` | Approved base      |
-| `color-graphite-front-three-quarter.webp`  | Approved base      |
-| `color-glacier-front-three-quarter.webp`   | Approved base      |
-| `seat-comfort-front-three-quarter.webp`    | Rejected prototype |
-| `seat-low-front-three-quarter.webp`        | Rejected prototype |
-| `touring-pack-front-three-quarter.webp`    | Rejected prototype |
-| `luggage-set-front-three-quarter.webp`     | Rejected prototype |
-| `urban-pack-front-three-quarter.webp`      | Rejected prototype |
+| File pattern                               | Status           |
+| ------------------------------------------ | ---------------- |
+| `color-signature-front-three-quarter.webp` | Approved base    |
+| `color-graphite-front-three-quarter.webp`  | Approved base    |
+| `color-glacier-front-three-quarter.webp`   | Approved base    |
+| `seat-comfort-front-three-quarter.webp`    | Approved overlay |
+| `seat-low-front-three-quarter.webp`        | Approved overlay |
+| `touring-pack-front-three-quarter.webp`    | Approved overlay |
+| `luggage-set-front-three-quarter.webp`     | Approved overlay |
+| `urban-pack-front-three-quarter.webp`      | Approved overlay |
 
 Where the original catalogue render already represents one selectable finish,
 that source image is reused as the aligned base instead of duplicating it.
 
-The finish variants were produced by editing the aligned full-frame base while
-preserving camera, motorcycle geometry, lighting and background. The rejected
-accessory sprites were isolated product renders positioned automatically; they
-did not preserve believable scale, perspective or mounting points and must not
-be assigned to `model_media` or demo `visualMedia`.
+The finish variants and accessory layers were produced by editing the aligned
+full-frame base while preserving camera, motorcycle geometry, lighting and
+background. Accessory layers were reviewed on every supported finish and in the
+allowed combinations before assignment to `model_media` and demo `visualMedia`.
 
-Future accessory layers must start from an edit of the exact motorcycle base,
-show the part already mounted, and then be extracted as a tightly masked pixel
-difference. Every layer must be reviewed on its target model and in supported
-combinations before publication.
+Future layers must follow the same mounted-edit and tightly masked difference
+workflow. The extraction utility is
+`scripts/extract-configurator-overlay.mjs`; isolated catalogue product renders
+must not be repurposed as configurator overlays.
 
 ## Accessory image set
 

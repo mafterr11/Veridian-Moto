@@ -82,6 +82,14 @@ const finishImagesByModel: Record<string, Record<FinishId, string>> = {
   },
 };
 
+const overlayChoices = [
+  { id: "seat-low", label: "șa joasă", sortOrder: 20 },
+  { id: "seat-comfort", label: "șa Comfort", sortOrder: 21 },
+  { id: "touring-pack", label: "pachet Touring", sortOrder: 40 },
+  { id: "urban-pack", label: "pachet Urban", sortOrder: 50 },
+  { id: "luggage-set", label: "set bagaje", sortOrder: 60 },
+] as const;
+
 function getFinishImages(model: Motorcycle) {
   return (
     finishImagesByModel[model.slug] ?? {
@@ -94,7 +102,7 @@ function getFinishImages(model: Motorcycle) {
 
 function buildVisualMedia(model: Motorcycle): ConfiguratorVisualMedia[] {
   const finishImages = getFinishImages(model);
-  return finishes.map((finish, index) => ({
+  const bases = finishes.map((finish, index) => ({
     role: "base" as const,
     image: finishImages[finish.id],
     alt: `${model.name} în finisaj ${finish.name}`,
@@ -102,6 +110,16 @@ function buildVisualMedia(model: Motorcycle): ConfiguratorVisualMedia[] {
     optionChoiceId: `color-${finish.id}`,
     sortOrder: index,
   }));
+  const overlays = overlayChoices.map((choice) => ({
+    role: "overlay" as const,
+    image: `/images/configurator/${model.slug}/${choice.id}-front-three-quarter.webp`,
+    alt: `${model.name} cu ${choice.label}`,
+    viewAngle: "front-three-quarter",
+    optionChoiceId: choice.id,
+    sortOrder: choice.sortOrder,
+  }));
+
+  return [...bases, ...overlays];
 }
 
 function genericCatalogue(model: Motorcycle): ConfiguratorCatalogue {
