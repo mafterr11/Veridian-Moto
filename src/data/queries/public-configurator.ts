@@ -250,7 +250,7 @@ async function loadPublicConfigurator(
 
 const getCachedPublicConfigurator = unstable_cache(
   loadPublicConfigurator,
-  ["public-configurator"],
+  ["public-configurator-v2"],
   {
     revalidate: 3_600,
     tags: [CACHE_TAGS.publicCatalogue, CACHE_TAGS.publicModels],
