@@ -300,6 +300,29 @@ test("configures the Terran 900 Rally with rule feedback", async ({ page }) => {
   await expect(page.locator('[data-visual-role="overlay"]')).toHaveCount(6);
 });
 
+test("places mobile rule feedback below the preview", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/configurator/terran-900-rally");
+
+  await page.getByRole("button", { name: /4\. Protecție/i }).click();
+  await page.getByRole("button", { name: /Kit protecție Rally/i }).click();
+
+  const toast = page
+    .locator("[data-rule-feedback-toast]")
+    .filter({ hasText: /Bare protecție motor a fost adăugată automat/i });
+  await expect(toast).toBeVisible();
+
+  const [toastBox, previewBox] = await Promise.all([
+    toast.boundingBox(),
+    page.locator("[data-configurator-preview]").boundingBox(),
+  ]);
+  expect(toastBox).not.toBeNull();
+  expect(previewBox).not.toBeNull();
+  expect(toastBox!.y).toBeGreaterThanOrEqual(
+    previewBox!.y + previewBox!.height - 1,
+  );
+});
+
 test("keeps the live preview visible while configuring on mobile", async ({
   page,
 }) => {

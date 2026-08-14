@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Toast } from "@base-ui/react/toast";
 import {
   AlertTriangle,
@@ -352,7 +358,10 @@ export function ConfiguratorExperience({
           </header>
 
           <div className="flex-1 px-4 py-4 sm:px-8 sm:py-8">
-            <RuleFeedback notices={notices} />
+            <RuleFeedback
+              notices={notices}
+              mobilePreviewCompact={mobilePreviewCompact}
+            />
 
             {step.id === "summary" ? (
               <ConfigurationSummary
@@ -660,11 +669,17 @@ function OptionCard({
   );
 }
 
-function RuleFeedback({ notices }: { notices: readonly RuleNotice[] }) {
+function RuleFeedback({
+  notices,
+  mobilePreviewCompact,
+}: {
+  notices: readonly RuleNotice[];
+  mobilePreviewCompact: boolean;
+}) {
   return (
     <Toast.Provider timeout={3500} limit={2}>
       <RuleFeedbackPublisher notices={notices} />
-      <RuleFeedbackViewport />
+      <RuleFeedbackViewport mobilePreviewCompact={mobilePreviewCompact} />
     </Toast.Provider>
   );
 }
@@ -692,14 +707,25 @@ function RuleFeedbackPublisher({
   return null;
 }
 
-function RuleFeedbackViewport() {
+function RuleFeedbackViewport({
+  mobilePreviewCompact,
+}: {
+  mobilePreviewCompact: boolean;
+}) {
   const { toasts } = Toast.useToastManager();
 
   return (
     <Toast.Portal>
       <Toast.Viewport
         data-rule-feedback-viewport
-        className="pointer-events-none fixed inset-x-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-[60] mx-auto flex max-w-md flex-col-reverse gap-2 outline-none lg:right-6 lg:bottom-6 lg:left-auto lg:mx-0 lg:w-[min(26rem,calc(100vw-3rem))]"
+        style={
+          {
+            "--rule-feedback-top": mobilePreviewCompact
+              ? "calc(4.5rem + clamp(8rem, 28svh, 15rem) + 0.75rem)"
+              : "calc(4.5rem + 48svh + 0.75rem)",
+          } as CSSProperties
+        }
+        className="pointer-events-none fixed inset-x-4 top-[var(--rule-feedback-top)] z-[60] mx-auto flex max-w-md flex-col-reverse gap-2 outline-none lg:top-auto lg:right-6 lg:bottom-6 lg:left-auto lg:mx-0 lg:w-[min(26rem,calc(100vw-3rem))]"
       >
         {toasts.map((toast) => {
           const Icon =
