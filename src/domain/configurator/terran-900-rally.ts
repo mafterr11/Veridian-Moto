@@ -133,11 +133,11 @@ export const terran900RallyConfigurator = {
     {
       role: "overlay",
       image:
-        "/images/configurator/terran-900-rally/passenger-comfort-front-three-quarter.webp",
+        "/images/configurator/terran-900-rally/passenger-comfort-v2-front-three-quarter.webp",
       alt: "Kitul de confort pentru pasager montat pe Terran 900 Rally",
       viewAngle: "front-three-quarter",
       optionChoiceId: "passenger-comfort",
-      sortOrder: 70,
+      sortOrder: 45,
     },
   ],
   standardEquipment: [
