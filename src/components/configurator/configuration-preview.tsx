@@ -201,13 +201,16 @@ export function ConfigurationPreview({
         <div
           key={highlightRevision}
           className={cn(
-            "border-veridian/60 absolute top-16 right-4 z-20 max-w-[min(22rem,75vw)] border bg-black/75 px-3 py-2 text-right text-[0.65rem] font-bold tracking-wide text-white uppercase shadow-xl backdrop-blur sm:right-6 lg:right-8",
-            compact && "top-12 right-3 max-w-[70vw] px-2 py-1.5 sm:right-4",
+            "border-veridian/60 absolute top-16 right-4 z-20 max-w-[min(22rem,75vw)] border bg-black/75 px-2 py-1.5 text-right text-[0.625rem] font-semibold tracking-normal text-white shadow-xl backdrop-blur sm:right-6 lg:right-8 lg:px-3 lg:py-2 lg:text-[0.65rem] lg:font-bold lg:tracking-wide lg:uppercase",
+            compact && "top-12 right-3 max-w-[70vw] sm:right-4",
             styles.selectionNotice,
           )}
           aria-hidden="true"
         >
-          Actualizat în imagine · {updatedChoiceNames.join(", ")}
+          <span className="lg:hidden">Imagine actualizată</span>
+          <span className="hidden lg:inline">
+            Actualizat în imagine · {updatedChoiceNames.join(", ")}
+          </span>
         </div>
       ) : null}
 

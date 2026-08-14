@@ -313,9 +313,7 @@ test("keeps the live preview visible while configuring on mobile", async ({
   ).toBeVisible();
   await expect(preview).toBeInViewport();
   await expect(option).toBeInViewport();
-  await expect(
-    page.getByText("Actualizat în imagine · Parbriz Touring"),
-  ).toBeInViewport();
+  await expect(page.getByText("Imagine actualizată")).toBeInViewport();
 
   const [siteHeaderBox, previewBox] = await Promise.all([
     page.locator("header").first().boundingBox(),
