@@ -264,15 +264,21 @@ test("configures the Terran 900 Rally with rule feedback", async ({ page }) => {
 
   await page.getByRole("button", { name: /4\. Protecție/i }).click();
   await page.getByRole("button", { name: /Kit protecție Rally/i }).click();
-  await expect(
-    page.getByText(/Bare protecție motor a fost adăugată automat/i),
-  ).toBeVisible();
+  const ruleFeedbackToast = page
+    .locator("[data-rule-feedback-toast]")
+    .filter({ hasText: /Bare protecție motor a fost adăugată automat/i });
+  await expect(ruleFeedbackToast).toBeVisible();
+  await expect(page.locator("[data-rule-feedback-viewport]")).toHaveCSS(
+    "position",
+    "fixed",
+  );
   await expect(
     page.locator('[data-visual-choice-id="engine-bars"]'),
   ).toBeVisible();
   await expect(
     page.locator('[data-visual-choice-id="rally-protection"]'),
   ).toBeVisible();
+  await expect(ruleFeedbackToast).toBeHidden({ timeout: 5_000 });
 
   await page.getByRole("button", { name: /5\. Bagaje/i }).click();
   await page.getByRole("button", { name: /Cutii laterale aluminium/i }).click();

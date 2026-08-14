@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useState } from "react";
+import { Toast } from "@base-ui/react/toast";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -14,6 +15,7 @@ import {
   Info,
   ShieldCheck,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 
 import {
@@ -347,9 +349,7 @@ export function ConfiguratorExperience({
           </header>
 
           <div className="flex-1 px-4 py-4 sm:px-8 sm:py-8">
-            <div aria-live="polite" aria-atomic="false">
-              {notices.length ? <RuleFeedback notices={notices} /> : null}
-            </div>
+            <RuleFeedback notices={notices} />
 
             {step.id === "summary" ? (
               <ConfigurationSummary
@@ -659,35 +659,84 @@ function OptionCard({
 
 function RuleFeedback({ notices }: { notices: readonly RuleNotice[] }) {
   return (
-    <div className="mb-6 space-y-2">
-      {notices
-        .filter((notice) => notice.code !== "choice-added")
-        .map((notice, index) => {
+    <Toast.Provider timeout={3500} limit={2}>
+      <RuleFeedbackPublisher notices={notices} />
+      <RuleFeedbackViewport />
+    </Toast.Provider>
+  );
+}
+
+function RuleFeedbackPublisher({
+  notices,
+}: {
+  notices: readonly RuleNotice[];
+}) {
+  const { add } = Toast.useToastManager();
+
+  useEffect(() => {
+    notices
+      .filter((notice) => notice.code !== "choice-added")
+      .forEach((notice) => {
+        add({
+          id: `${notice.code}-${notice.choiceId}`,
+          description: notice.message,
+          type: notice.tone,
+          priority: notice.tone === "error" ? "high" : "low",
+        });
+      });
+  }, [add, notices]);
+
+  return null;
+}
+
+function RuleFeedbackViewport() {
+  const { toasts } = Toast.useToastManager();
+
+  return (
+    <Toast.Portal>
+      <Toast.Viewport
+        data-rule-feedback-viewport
+        className="pointer-events-none fixed inset-x-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-[60] mx-auto flex max-w-md flex-col-reverse gap-2 outline-none lg:right-6 lg:bottom-6 lg:left-auto lg:mx-0 lg:w-[min(26rem,calc(100vw-3rem))]"
+      >
+        {toasts.map((toast) => {
           const Icon =
-            notice.tone === "error"
+            toast.type === "error"
               ? AlertTriangle
-              : notice.tone === "warning"
+              : toast.type === "warning"
                 ? Info
                 : CheckCircle2;
+
           return (
-            <div
-              key={`${notice.code}-${notice.choiceId}-${index}`}
+            <Toast.Root
+              key={toast.id}
+              toast={toast}
+              swipeDirection={["right", "down"]}
+              data-rule-feedback-toast
               className={cn(
-                "flex gap-3 border p-3 text-sm leading-5",
-                notice.tone === "error" &&
+                "pointer-events-auto flex w-full items-start gap-3 border p-3.5 text-sm leading-5 shadow-[0_12px_36px_rgba(0,0,0,0.18)] transition-[transform,opacity] duration-200 ease-out data-[ending-style]:translate-y-3 data-[ending-style]:opacity-0 data-[starting-style]:translate-y-3 data-[starting-style]:opacity-0 motion-reduce:transition-none",
+                toast.type === "error" &&
                   "border-red-300 bg-red-50 text-red-900",
-                notice.tone === "warning" &&
+                toast.type === "warning" &&
                   "border-amber-300 bg-amber-50 text-amber-950",
-                notice.tone === "info" &&
-                  "border-veridian/35 bg-veridian/5 text-obsidian",
+                toast.type === "info" &&
+                  "border-veridian/45 text-obsidian bg-[#f4fffb]",
               )}
             >
               <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              <p>{notice.message}</p>
-            </div>
+              <Toast.Content className="min-w-0 flex-1">
+                <Toast.Description />
+              </Toast.Content>
+              <Toast.Close
+                aria-label="Închide mesajul"
+                className="-m-1 grid size-8 shrink-0 place-items-center opacity-60 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </Toast.Close>
+            </Toast.Root>
           );
         })}
-    </div>
+      </Toast.Viewport>
+    </Toast.Portal>
   );
 }
 
