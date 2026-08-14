@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -53,6 +53,8 @@ type ConfiguratorExperienceProps = {
   };
 };
 
+const MOBILE_CONFIGURATOR_QUERY = "(max-width: 63.999rem)";
+
 export function ConfiguratorExperience({
   catalogue,
   model,
@@ -65,6 +67,30 @@ export function ConfiguratorExperience({
   const [visualSelectionSignal, setVisualSelectionSignal] = useState<
     VisualSelectionSignal | undefined
   >();
+  const [mobilePreviewCompact, setMobilePreviewCompact] = useState(false);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const mobileViewport = window.matchMedia(MOBILE_CONFIGURATOR_QUERY);
+    let previousCompact = false;
+    const syncPreviewState = () => {
+      const nextCompact = mobileViewport.matches && window.scrollY > 48;
+      if (nextCompact === previousCompact) return;
+
+      previousCompact = nextCompact;
+      setMobilePreviewCompact(nextCompact);
+    };
+
+    syncPreviewState();
+    window.addEventListener("scroll", syncPreviewState, { passive: true });
+    mobileViewport.addEventListener("change", syncPreviewState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPreviewState);
+      mobileViewport.removeEventListener("change", syncPreviewState);
+    };
+  }, []);
   const visualChoiceIds = useMemo(
     () =>
       new Set(
@@ -114,19 +140,21 @@ export function ConfiguratorExperience({
     );
 
     if (result.accepted) {
-      const newlySelectedVisualChoiceIds = Object.values(
-        result.state.selectedByGroup,
-      )
-        .flat()
-        .filter(
-          (choiceId) =>
-            !selectedIds.has(choiceId) && visualChoiceIds.has(choiceId),
-        );
+      const nextSelectedIds = new Set(
+        Object.values(result.state.selectedByGroup).flat(),
+      );
+      const changedVisualChoiceIds = [
+        ...new Set([...selectedIds, ...nextSelectedIds]),
+      ].filter(
+        (choiceId) =>
+          visualChoiceIds.has(choiceId) &&
+          selectedIds.has(choiceId) !== nextSelectedIds.has(choiceId),
+      );
 
       setConfiguration(result.state);
-      if (newlySelectedVisualChoiceIds.length) {
+      if (changedVisualChoiceIds.length) {
         setVisualSelectionSignal((current) => ({
-          choiceIds: newlySelectedVisualChoiceIds,
+          choiceIds: changedVisualChoiceIds,
           revision: (current?.revision ?? 0) + 1,
         }));
       }
@@ -146,7 +174,14 @@ export function ConfiguratorExperience({
   return (
     <main className="bg-porcelain text-obsidian">
       <div className="lg:grid lg:min-h-[calc(100svh-5rem)] lg:grid-cols-[minmax(0,1.45fr)_minmax(25rem,0.9fr)]">
-        <section className="relative min-h-[48svh] overflow-hidden bg-[#080a0a] lg:sticky lg:top-20 lg:h-[calc(100svh-5rem)]">
+        <section
+          data-configurator-preview
+          data-preview-state={mobilePreviewCompact ? "compact" : "expanded"}
+          className={cn(
+            "sticky top-18 z-30 h-[48svh] overflow-hidden bg-[#080a0a] transition-[height] duration-300 ease-out motion-reduce:transition-none lg:top-20 lg:h-[calc(100svh-5rem)]",
+            mobilePreviewCompact && "h-[clamp(8rem,28svh,15rem)]",
+          )}
+        >
           <ConfigurationPreview
             catalogue={catalogue}
             configuration={configuration}
@@ -154,34 +189,66 @@ export function ConfiguratorExperience({
             fallbackImageAlt={model.imageAlt}
             onViewAngleChange={handleViewAngleChange}
             selectionSignal={visualSelectionSignal}
+            compact={mobilePreviewCompact}
           />
           <div
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35"
             aria-hidden="true"
           />
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center gap-4 p-4 sm:p-6 lg:p-8">
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center gap-4 p-4 sm:p-6 lg:p-8",
+              mobilePreviewCompact && "p-3 sm:p-4",
+            )}
+          >
             <Link
               href="/configurator"
               className="pointer-events-auto flex items-center gap-2 text-sm font-bold text-white"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Schimbă modelul</span>
-              <span className="sm:hidden">Modele</span>
+              {mobilePreviewCompact ? (
+                <span>Modele</span>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Schimbă modelul</span>
+                  <span className="sm:hidden">Modele</span>
+                </>
+              )}
             </Link>
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6 lg:p-8">
+          <div
+            className={cn(
+              "absolute inset-x-0 bottom-0 p-4 text-white sm:p-6 lg:p-8",
+              mobilePreviewCompact && "p-3 sm:p-4",
+            )}
+          >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-primary text-xs font-bold tracking-[0.18em] uppercase">
+                <p
+                  className={cn(
+                    "text-primary text-xs font-bold tracking-[0.18em] uppercase",
+                    mobilePreviewCompact && "hidden",
+                  )}
+                >
                   VERIDIAN · {model.category}
                 </p>
-                <h1 className="font-heading mt-2 text-4xl font-extrabold tracking-tight uppercase sm:text-6xl lg:text-7xl">
+                <h1
+                  className={cn(
+                    "font-heading mt-2 text-4xl font-extrabold tracking-tight uppercase sm:text-6xl lg:text-7xl",
+                    mobilePreviewCompact && "mt-0 text-2xl sm:text-3xl",
+                  )}
+                >
                   {catalogue.modelName}
                 </h1>
               </div>
-              <div className="hidden gap-6 text-right sm:flex">
+              <div
+                className={cn(
+                  "hidden gap-6 text-right sm:flex",
+                  mobilePreviewCompact && "sm:hidden",
+                )}
+              >
                 <PreviewStat value={`${model.powerHp} CP`} label="Putere" />
                 <PreviewStat value={`${model.torqueNm} Nm`} label="Cuplu" />
                 <PreviewStat
@@ -191,7 +258,12 @@ export function ConfiguratorExperience({
               </div>
             </div>
 
-            <details className="group mt-5 border-t border-white/18 pt-4">
+            <details
+              className={cn(
+                "group mt-5 border-t border-white/18 pt-4",
+                mobilePreviewCompact && "hidden",
+              )}
+            >
               <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-bold tracking-[0.12em] uppercase [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center gap-2">
                   <ShieldCheck
@@ -336,47 +408,60 @@ export function ConfiguratorExperience({
             )}
           </div>
 
-          <footer className="border-obsidian/10 sticky bottom-0 z-20 border-t bg-white/95 p-4 shadow-[0_-16px_40px_rgba(0,0,0,0.08)] backdrop-blur sm:px-8 sm:py-5">
-            <div className="mb-4 flex items-end justify-between gap-5">
-              <div>
-                <p className="text-steel text-[0.65rem] font-bold tracking-wide uppercase">
-                  Total curent · TVA inclus
-                </p>
-                <p className="font-heading mt-1 text-3xl font-extrabold">
-                  {formatMinorPrice(evaluation.totalMinor)}
+          <footer
+            data-configurator-actions
+            className="border-obsidian/10 sticky bottom-0 z-40 border-t bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-16px_40px_rgba(0,0,0,0.08)] backdrop-blur lg:px-8 lg:py-5"
+          >
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:block">
+              <div className="flex items-end justify-between gap-5 lg:mb-4">
+                <div>
+                  <p className="text-steel text-[0.6rem] font-bold tracking-wide uppercase lg:text-[0.65rem]">
+                    <span className="lg:hidden">Total</span>
+                    <span className="hidden lg:inline">
+                      Total curent · TVA inclus
+                    </span>
+                  </p>
+                  <p className="font-heading mt-0.5 text-2xl leading-none font-extrabold lg:mt-1 lg:text-3xl lg:leading-normal">
+                    {formatMinorPrice(evaluation.totalMinor)}
+                  </p>
+                </div>
+                <p className="text-steel hidden text-right text-xs lg:block">
+                  Preț recalculat din {evaluation.selectedChoices.length}{" "}
+                  selecții
                 </p>
               </div>
-              <p className="text-steel hidden text-right text-xs sm:block">
-                Preț recalculat din {evaluation.selectedChoices.length} selecții
-              </p>
-            </div>
-            <div className="grid grid-cols-[auto_1fr] gap-3">
-              <button
-                type="button"
-                onClick={() => goToStep(activeStep - 1)}
-                disabled={activeStep === 0}
-                className="border-obsidian/20 grid size-12 place-items-center border transition-colors hover:bg-stone-100 disabled:opacity-35"
-                aria-label="Pasul anterior"
-              >
-                <ArrowLeft className="size-4" aria-hidden="true" />
-              </button>
-              {activeStep < steps.length - 1 ? (
+              <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-2 lg:gap-3">
                 <button
                   type="button"
-                  onClick={() => goToStep(activeStep + 1)}
-                  className="bg-veridian text-obsidian flex h-12 items-center justify-center gap-2 px-5 font-bold transition-colors hover:bg-[#16cf98]"
+                  onClick={() => goToStep(activeStep - 1)}
+                  disabled={activeStep === 0}
+                  className="border-obsidian/20 grid size-11 place-items-center border transition-colors hover:bg-stone-100 disabled:opacity-35 lg:size-12"
+                  aria-label="Pasul anterior"
                 >
-                  Continuă la {steps[activeStep + 1]?.label}
-                  <ArrowRight className="size-4" aria-hidden="true" />
+                  <ArrowLeft className="size-4" aria-hidden="true" />
                 </button>
-              ) : (
-                <ConfigurationSaveForm
-                  catalogue={catalogue}
-                  configuration={configuration}
-                  modelSlug={model.slug}
-                  totalMinor={evaluation.totalMinor}
-                />
-              )}
+                {activeStep < steps.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => goToStep(activeStep + 1)}
+                    aria-label={`Continuă la ${steps[activeStep + 1]?.label}`}
+                    className="bg-veridian text-obsidian flex h-11 min-w-0 items-center justify-center gap-1.5 px-3 text-sm font-bold transition-colors hover:bg-[#16cf98] lg:h-12 lg:gap-2 lg:px-5 lg:text-base"
+                  >
+                    <span className="lg:hidden">Continuă</span>
+                    <span className="hidden lg:inline">
+                      Continuă la {steps[activeStep + 1]?.label}
+                    </span>
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </button>
+                ) : (
+                  <ConfigurationSaveForm
+                    catalogue={catalogue}
+                    configuration={configuration}
+                    modelSlug={model.slug}
+                    totalMinor={evaluation.totalMinor}
+                  />
+                )}
+              </div>
             </div>
           </footer>
         </section>
@@ -404,16 +489,31 @@ function ConfigurationSaveForm({
   );
 
   return (
-    <form action={formAction} className="grid gap-2">
+    <form action={formAction} className="grid min-w-0 gap-2">
       <input type="hidden" name="modelSlug" value={modelSlug} />
       <input type="hidden" name="state" value={JSON.stringify(configuration)} />
       <input type="hidden" name="clientTotalMinor" value={totalMinor} />
       <button
         type="submit"
         disabled={pending}
-        className={buttonVariants({ className: "h-12" })}
+        aria-label={
+          pending ? "Se validează pe server" : "Salvează și cere ofertă"
+        }
+        className={buttonVariants({
+          className: "h-11 min-w-0 px-2 text-xs lg:h-12 lg:px-4 lg:text-sm",
+        })}
       >
-        {pending ? "Se validează pe server…" : "Salvează și cere ofertă"}
+        {pending ? (
+          <>
+            <span className="lg:hidden">Se validează…</span>
+            <span className="hidden lg:inline">Se validează pe server…</span>
+          </>
+        ) : (
+          <>
+            <span className="lg:hidden">Cere ofertă</span>
+            <span className="hidden lg:inline">Salvează și cere ofertă</span>
+          </>
+        )}
         <ArrowRight data-icon="inline-end" aria-hidden="true" />
       </button>
       {state.status === "error" && (

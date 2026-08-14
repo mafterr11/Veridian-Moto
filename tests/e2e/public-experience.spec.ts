@@ -294,6 +294,45 @@ test("configures the Terran 900 Rally with rule feedback", async ({ page }) => {
   await expect(page.locator('[data-visual-role="overlay"]')).toHaveCount(6);
 });
 
+test("keeps the live preview visible while configuring on mobile", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/configurator/terran-900-rally");
+
+  await page.getByRole("button", { name: /6\. Accesorii/i }).click();
+  const option = page.getByRole("button", { name: /Parbriz Touring/i });
+  await option.scrollIntoViewIfNeeded();
+
+  const preview = page.locator("[data-configurator-preview]");
+  await expect(preview).toHaveAttribute("data-preview-state", "compact");
+  await option.click();
+
+  await expect(
+    page.locator('[data-visual-choice-id="tall-screen"]'),
+  ).toBeVisible();
+  await expect(preview).toBeInViewport();
+  await expect(option).toBeInViewport();
+  await expect(
+    page.getByText("Actualizat în imagine · Parbriz Touring"),
+  ).toBeInViewport();
+
+  const [siteHeaderBox, previewBox] = await Promise.all([
+    page.locator("header").first().boundingBox(),
+    preview.boundingBox(),
+  ]);
+  expect(siteHeaderBox).not.toBeNull();
+  expect(previewBox).not.toBeNull();
+  expect(previewBox!.y).toBeGreaterThanOrEqual(
+    siteHeaderBox!.y + siteHeaderBox!.height - 1,
+  );
+
+  await page.getByRole("button", { name: /7\. Sumar/i }).click();
+  await expect(
+    page.getByRole("button", { name: "Salvează și cere ofertă" }),
+  ).toBeInViewport();
+});
+
 test("offers a working configurator for another initial model", async ({
   page,
 }) => {

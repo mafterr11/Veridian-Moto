@@ -115,5 +115,17 @@ describe("ConfiguratorExperience", () => {
       container.querySelector('[data-visual-choice-id="tall-screen"]'),
     ).toHaveAttribute("data-highlighted", "true");
     expect(screen.getByRole("status")).toHaveTextContent(/Parbriz Touring/i);
+
+    const selectionNotice = screen.getByText(
+      "Actualizat în imagine · Parbriz Touring",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Parbriz Touring/i }));
+
+    expect(
+      container.querySelector('[data-visual-choice-id="tall-screen"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Actualizat în imagine · Parbriz Touring"),
+    ).not.toBe(selectionNotice);
   });
 });

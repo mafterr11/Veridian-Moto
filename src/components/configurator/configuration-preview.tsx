@@ -25,6 +25,7 @@ type ConfigurationPreviewProps = {
   fallbackImageAlt: string;
   onViewAngleChange: (viewAngle: string) => void;
   selectionSignal?: VisualSelectionSignal;
+  compact?: boolean;
 };
 
 const angleLabels: Readonly<Record<string, string>> = {
@@ -48,6 +49,7 @@ export function ConfigurationPreview({
   fallbackImageAlt,
   onViewAngleChange,
   selectionSignal,
+  compact = false,
 }: ConfigurationPreviewProps) {
   const captionId = useId();
   const angles = useMemo(
@@ -200,6 +202,7 @@ export function ConfigurationPreview({
           key={highlightRevision}
           className={cn(
             "border-veridian/60 absolute top-16 right-4 z-20 max-w-[min(22rem,75vw)] border bg-black/75 px-3 py-2 text-right text-[0.65rem] font-bold tracking-wide text-white uppercase shadow-xl backdrop-blur sm:right-6 lg:right-8",
+            compact && "top-12 right-3 max-w-[70vw] px-2 py-1.5 sm:right-4",
             styles.selectionNotice,
           )}
           aria-hidden="true"
@@ -208,7 +211,12 @@ export function ConfigurationPreview({
         </div>
       ) : null}
 
-      <div className="absolute top-0 right-0 z-20 p-4 sm:p-6 lg:p-8">
+      <div
+        className={cn(
+          "absolute top-0 right-0 z-20 p-4 sm:p-6 lg:p-8",
+          compact && "p-3 sm:p-4",
+        )}
+      >
         {catalogue.visualMedia?.length && angles.length > 1 ? (
           <div
             className="flex max-w-[65vw] flex-wrap justify-end gap-1"
@@ -223,6 +231,7 @@ export function ConfigurationPreview({
                 aria-pressed={angle === activeAngle}
                 className={cn(
                   "border px-3 py-2 text-[0.65rem] font-bold tracking-wide uppercase backdrop-blur transition-colors motion-reduce:transition-none",
+                  compact && "px-2 py-1.5 text-[0.6rem]",
                   angle === activeAngle
                     ? "border-veridian bg-veridian text-obsidian"
                     : "border-white/20 bg-black/30 text-white hover:border-white/50",
@@ -234,7 +243,12 @@ export function ConfigurationPreview({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="border border-white/20 bg-black/30 px-3 py-2 text-[0.65rem] font-bold tracking-wide text-white uppercase backdrop-blur">
+            <span
+              className={cn(
+                "border border-white/20 bg-black/30 px-3 py-2 text-[0.65rem] font-bold tracking-wide text-white uppercase backdrop-blur",
+                compact && "px-2 py-1.5 text-[0.6rem]",
+              )}
+            >
               {formatViewAngle(activeAngle)}
             </span>
             {!catalogue.visualMedia?.length ? (
