@@ -4,7 +4,12 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Download, LockKeyhole } from "lucide-react";
 
 import { ConfigurationShareButton } from "@/components/configurator/configuration-share-button";
+import {
+  offerDownloadClassName,
+  offerDownloadIconClassName,
+} from "@/components/configurator/offer-download-style";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { getPublicConfiguration } from "@/data/queries/public-configurations";
 import { publicReferenceSchema } from "@/domain/enquiries/schemas";
 import { formatMinorPrice } from "@/lib/format";
@@ -115,9 +120,11 @@ async function SavedConfigurationContent({ params }: PageProps) {
           </Link>
           <a
             href={`/api/oferta/${snapshot.reference}`}
-            className={buttonVariants({ variant: "outline", size: "lg" })}
+            className={cn(offerDownloadClassName, "h-12 text-xs")}
           >
-            <Download data-icon="inline-start" aria-hidden="true" />
+            <span className={offerDownloadIconClassName}>
+              <Download className="size-3.5" aria-hidden="true" />
+            </span>
             Descarcă oferta PDF
           </a>
           <ConfigurationShareButton />

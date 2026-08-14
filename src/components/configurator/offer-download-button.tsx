@@ -3,7 +3,10 @@
 import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 
-import { buttonVariants } from "@/components/ui/button";
+import {
+  offerDownloadClassName,
+  offerDownloadIconClassName,
+} from "@/components/configurator/offer-download-style";
 import type { ConfigurationState } from "@/domain/configurator/types";
 import { cn } from "@/lib/utils";
 
@@ -84,23 +87,21 @@ export function OfferDownloadButton({
         onClick={download}
         disabled={pending}
         className={cn(
-          buttonVariants({
-            variant: "outline",
-            className: "h-11 min-w-0 px-2 text-xs lg:h-12 lg:px-4 lg:text-sm",
-          }),
+          offerDownloadClassName,
+          "h-10 text-[0.65rem] lg:h-11 lg:text-xs",
           className,
         )}
       >
-        {pending ? (
-          <Loader2
-            className="animate-spin"
-            data-icon="inline-start"
-            aria-hidden="true"
-          />
-        ) : (
-          <Download data-icon="inline-start" aria-hidden="true" />
-        )}
-        {pending ? "Se pregătește PDF-ul…" : "Descarcă oferta PDF"}
+        <span className={offerDownloadIconClassName}>
+          {pending ? (
+            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+          ) : (
+            <Download className="size-3.5" aria-hidden="true" />
+          )}
+        </span>
+        <span className="truncate">
+          {pending ? "Se pregătește PDF-ul…" : "Descarcă oferta PDF"}
+        </span>
       </button>
       {error ? (
         <p className="text-sm text-red-700" role="alert">

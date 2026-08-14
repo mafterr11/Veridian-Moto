@@ -294,13 +294,13 @@ export function ConfiguratorExperience({
         </section>
 
         <section className="flex min-h-[52svh] flex-col bg-white lg:min-h-[calc(100svh-5rem)]">
-          <header className="border-obsidian/10 border-b px-5 pt-5 sm:px-8 sm:pt-7">
+          <header className="border-obsidian/10 border-b px-4 pt-4 sm:px-8 sm:pt-7">
             <div className="flex items-start justify-between gap-5">
               <div>
-                <p className="text-veridian-dark text-xs font-bold tracking-[0.16em] uppercase">
+                <p className="text-veridian-dark text-[0.65rem] font-bold tracking-[0.16em] uppercase sm:text-xs">
                   Pasul {activeStep + 1} din {steps.length}
                 </p>
-                <h2 className="font-heading mt-1 text-3xl font-extrabold uppercase sm:text-4xl">
+                <h2 className="font-heading mt-0.5 text-2xl font-extrabold uppercase sm:mt-1 sm:text-4xl">
                   {step.label}
                 </h2>
               </div>
@@ -312,7 +312,7 @@ export function ConfiguratorExperience({
 
             <nav
               aria-label="Pașii configuratorului"
-              className="mt-5 flex scrollbar-none gap-1 overflow-x-auto"
+              className="mt-3 flex scrollbar-none gap-1 overflow-x-auto sm:mt-5"
             >
               {steps.map((item, index) => (
                 <button
@@ -320,7 +320,7 @@ export function ConfiguratorExperience({
                   type="button"
                   onClick={() => goToStep(index)}
                   className={cn(
-                    "border-b-2 px-3 py-3 text-xs font-bold whitespace-nowrap transition-colors",
+                    "border-b-2 px-2.5 py-2.5 text-[0.7rem] font-bold whitespace-nowrap transition-colors sm:px-3 sm:py-3 sm:text-xs",
                     index === activeStep
                       ? "border-veridian text-obsidian"
                       : "text-steel hover:text-obsidian border-transparent",
@@ -346,7 +346,7 @@ export function ConfiguratorExperience({
             </div>
           </header>
 
-          <div className="flex-1 px-5 py-6 sm:px-8 sm:py-8">
+          <div className="flex-1 px-4 py-4 sm:px-8 sm:py-8">
             <div aria-live="polite" aria-atomic="false">
               {notices.length ? <RuleFeedback notices={notices} /> : null}
             </div>
@@ -357,7 +357,7 @@ export function ConfiguratorExperience({
                 catalogue={catalogue}
               />
             ) : (
-              <div className="space-y-9">
+              <div className="space-y-6 sm:space-y-9">
                 {step.groupIds.map((groupId) => {
                   const group = catalogue.groups.find(
                     (item) => item.id === groupId,
@@ -367,12 +367,12 @@ export function ConfiguratorExperience({
 
                   return (
                     <fieldset key={group.id}>
-                      <div className="flex items-end justify-between gap-5">
+                      <div className="flex items-end justify-between gap-4 sm:gap-5">
                         <div>
-                          <legend className="font-heading text-2xl font-extrabold uppercase">
+                          <legend className="font-heading text-xl font-extrabold uppercase sm:text-2xl">
                             {group.name}
                           </legend>
-                          <p className="text-steel mt-1 max-w-xl text-sm leading-6">
+                          <p className="text-steel mt-0.5 max-w-xl text-xs leading-5 sm:mt-1 sm:text-sm sm:leading-6">
                             {group.description}
                           </p>
                         </div>
@@ -385,8 +385,10 @@ export function ConfiguratorExperience({
 
                       <div
                         className={cn(
-                          "mt-5 grid gap-3",
-                          group.id === finishGroup?.id && "sm:grid-cols-3",
+                          "mt-3 grid gap-2 sm:mt-5 sm:gap-3",
+                          // Colour choices carry their own swatch, so three to a
+                          // row stays readable and keeps the list above the fold.
+                          group.id === finishGroup?.id && "grid-cols-3",
                         )}
                       >
                         {group.choices
@@ -556,6 +558,10 @@ function OptionCard({
   onSelect: () => void;
 }) {
   const included = choice.priceDeltaMinor === 0;
+  const isSwatchGroup = group.choices.some((item) => item.swatch);
+  // A colour is self-evidently visible in the preview, so the hint only costs
+  // two wrapped lines inside an already narrow card.
+  const showVisualHint = visual && !isSwatchGroup;
 
   return (
     <button
@@ -563,43 +569,55 @@ function OptionCard({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        "group relative flex min-h-24 w-full items-start gap-4 border p-4 text-left transition-colors",
+        "group relative flex w-full items-start gap-3 border p-3 text-left transition-colors sm:min-h-24 sm:gap-4 sm:p-4",
         selected
           ? "border-veridian bg-veridian/5"
           : "border-obsidian/15 hover:border-obsidian/35",
-        group.choices.some((item) => item.swatch) && "flex-col gap-3",
+        isSwatchGroup && "flex-col items-center gap-2 sm:items-start sm:gap-3",
       )}
     >
       <span
         className={cn(
-          "mt-0.5 grid size-5 shrink-0 place-items-center border",
+          "mt-0.5 grid size-4 shrink-0 place-items-center border sm:size-5",
           group.mode === "single" && "rounded-full",
           selected
             ? "border-veridian bg-veridian text-obsidian"
             : "border-obsidian/30",
-          group.choices.some((item) => item.swatch) && "absolute top-3 right-3",
+          isSwatchGroup && "absolute top-2 right-2 sm:top-3 sm:right-3",
         )}
         aria-hidden="true"
       >
-        {selected ? <Check className="size-3" strokeWidth={3} /> : null}
+        {selected ? (
+          <Check className="size-2.5 sm:size-3" strokeWidth={3} />
+        ) : null}
       </span>
 
       {choice.swatch ? (
         <span
-          className="size-10 rounded-full border border-black/15 shadow-inner"
+          className="size-8 rounded-full border border-black/15 shadow-inner sm:size-10"
           style={{ backgroundColor: choice.swatch }}
           aria-hidden="true"
         />
       ) : null}
 
-      <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center justify-between gap-2">
-          <strong className="font-heading text-xl font-bold uppercase">
+      <span
+        className={cn(
+          "min-w-0 flex-1",
+          isSwatchGroup && "w-full text-center sm:text-left",
+        )}
+      >
+        <span
+          className={cn(
+            "flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5",
+            isSwatchGroup && "justify-center sm:justify-between",
+          )}
+        >
+          <strong className="font-heading text-base leading-tight font-bold uppercase sm:text-xl">
             {choice.name}
           </strong>
           <span
             className={cn(
-              "text-xs font-bold",
+              "text-[0.7rem] font-bold sm:text-xs",
               included ? "text-veridian-dark" : "text-obsidian",
             )}
           >
@@ -608,18 +626,30 @@ function OptionCard({
               : `+ ${formatMinorPrice(choice.priceDeltaMinor)}`}
           </span>
         </span>
-        <span className="text-steel mt-1 block text-xs leading-5">
+        {/* A colour swatch already says what the choice is, so its prose only
+            competes for room in the narrow mobile column. */}
+        <span
+          className={cn(
+            "text-steel mt-1 block text-[0.7rem] leading-4 sm:text-xs sm:leading-5",
+            isSwatchGroup && "hidden sm:block",
+          )}
+        >
           {choice.shortDescription}
         </span>
-        {choice.badge ? (
-          <span className="text-veridian-dark mt-2 inline-flex text-[0.65rem] font-bold tracking-wide uppercase">
-            {choice.badge}
-          </span>
-        ) : null}
-        {visual ? (
-          <span className="text-veridian-dark mt-2 flex items-center gap-1.5 text-[0.65rem] font-bold tracking-wide uppercase">
-            <Eye className="size-3.5" aria-hidden="true" />
-            Vizibil în imagine
+        {choice.badge || showVisualHint ? (
+          <span
+            className={cn(
+              "text-veridian-dark mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.6rem] font-bold tracking-wide uppercase sm:mt-2 sm:text-[0.65rem]",
+              isSwatchGroup && "justify-center sm:justify-start",
+            )}
+          >
+            {choice.badge ? <span>{choice.badge}</span> : null}
+            {showVisualHint ? (
+              <span className="flex items-center gap-1.5">
+                <Eye className="size-3 sm:size-3.5" aria-hidden="true" />
+                Vizibil în imagine
+              </span>
+            ) : null}
           </span>
         ) : null}
       </span>
