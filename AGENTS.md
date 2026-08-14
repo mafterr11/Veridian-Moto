@@ -12,3 +12,4 @@
 - Archive catalogue records instead of deleting records with historical references.
 - Do not add checkout, customer accounts, 3D rendering, multilingual support, or other deferred scope without explicit approval.
 - Before finishing a change, run the smallest relevant checks. Before a milestone handoff, run `pnpm check` and relevant Playwright tests.
+- Commit and push finished work straight to `main`. Do not park it on a feature branch or open a pull request unless asked. Pushing to `main` deploys to production, so run the checks above first.
