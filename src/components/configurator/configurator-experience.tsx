@@ -181,7 +181,7 @@ export function ConfiguratorExperience({
           data-configurator-preview
           data-preview-state={mobilePreviewCompact ? "compact" : "expanded"}
           className={cn(
-            "sticky top-18 z-30 h-[48svh] overflow-hidden bg-[#080a0a] transition-[height] duration-300 ease-out motion-reduce:transition-none lg:top-20 lg:h-[calc(100svh-5rem)]",
+            "sticky top-18 z-30 h-[48svh] overflow-hidden bg-[#080a0a] transition-[height] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none lg:top-20 lg:h-[calc(100svh-5rem)]",
             mobilePreviewCompact && "h-[clamp(8rem,28svh,15rem)]",
           )}
         >
@@ -201,7 +201,7 @@ export function ConfiguratorExperience({
 
           <div
             className={cn(
-              "pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center gap-4 p-4 sm:p-6 lg:p-8",
+              "pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center gap-4 p-4 transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:p-6 lg:p-8",
               mobilePreviewCompact && "p-3 sm:p-4",
             )}
           >
@@ -223,7 +223,7 @@ export function ConfiguratorExperience({
 
           <div
             className={cn(
-              "absolute inset-x-0 bottom-0 p-4 text-white sm:p-6 lg:p-8",
+              "absolute inset-x-0 bottom-0 p-4 text-white transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:p-6 lg:p-8",
               mobilePreviewCompact && "p-3 sm:p-4",
             )}
           >
@@ -231,15 +231,16 @@ export function ConfiguratorExperience({
               <div>
                 <p
                   className={cn(
-                    "text-primary text-xs font-bold tracking-[0.18em] uppercase",
-                    mobilePreviewCompact && "hidden",
+                    "text-primary max-h-5 overflow-hidden text-xs font-bold tracking-[0.18em] uppercase transition-[max-height,opacity,transform] duration-300 ease-out motion-reduce:transition-none",
+                    mobilePreviewCompact &&
+                      "pointer-events-none max-h-0 -translate-y-1 opacity-0",
                   )}
                 >
                   VERIDIAN · {model.category}
                 </p>
                 <h1
                   className={cn(
-                    "font-heading mt-2 text-4xl font-extrabold tracking-tight uppercase sm:text-6xl lg:text-7xl",
+                    "font-heading mt-2 text-4xl font-extrabold tracking-tight uppercase transition-[margin,font-size] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:text-6xl lg:text-7xl",
                     mobilePreviewCompact && "mt-0 text-2xl sm:text-3xl",
                   )}
                 >
@@ -248,8 +249,9 @@ export function ConfiguratorExperience({
               </div>
               <div
                 className={cn(
-                  "hidden gap-6 text-right sm:flex",
-                  mobilePreviewCompact && "sm:hidden",
+                  "hidden gap-6 overflow-hidden text-right sm:flex sm:max-h-16 sm:transition-[max-height,opacity,transform] sm:duration-300 sm:ease-out sm:motion-reduce:transition-none",
+                  mobilePreviewCompact &&
+                    "sm:pointer-events-none sm:max-h-0 sm:translate-y-2 sm:opacity-0",
                 )}
               >
                 <PreviewStat value={`${model.powerHp} CP`} label="Putere" />
@@ -263,8 +265,9 @@ export function ConfiguratorExperience({
 
             <details
               className={cn(
-                "group mt-5 border-t border-white/18 pt-4",
-                mobilePreviewCompact && "hidden",
+                "group mt-5 max-h-80 overflow-hidden border-t border-white/18 pt-4 transition-[max-height,margin,padding,opacity,transform,border-color] duration-300 ease-out motion-reduce:transition-none",
+                mobilePreviewCompact &&
+                  "pointer-events-none mt-0 max-h-0 translate-y-2 border-transparent pt-0 opacity-0",
               )}
             >
               <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-bold tracking-[0.12em] uppercase [&::-webkit-details-marker]:hidden">

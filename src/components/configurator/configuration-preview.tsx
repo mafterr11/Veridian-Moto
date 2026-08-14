@@ -101,7 +101,11 @@ export function ConfigurationPreview({
     <>
       {usesLayeredMedia ? (
         <figure
-          className="absolute inset-0 overflow-hidden"
+          className={cn(
+            "absolute inset-0 overflow-hidden",
+            styles.visualStage,
+            compact && styles.compactVisualStage,
+          )}
           aria-label="Previzualizarea configurației"
           aria-describedby={captionId}
         >
@@ -201,7 +205,7 @@ export function ConfigurationPreview({
         <div
           key={highlightRevision}
           className={cn(
-            "border-veridian/60 absolute top-16 right-4 z-20 max-w-[min(22rem,75vw)] border bg-black/75 px-2 py-1.5 text-right text-[0.625rem] font-semibold tracking-normal text-white shadow-xl backdrop-blur sm:right-6 lg:right-8 lg:px-3 lg:py-2 lg:text-[0.65rem] lg:font-bold lg:tracking-wide lg:uppercase",
+            "border-veridian/60 absolute top-16 right-4 z-20 max-w-[min(22rem,75vw)] border bg-black/75 px-2 py-1.5 text-right text-[0.625rem] font-semibold tracking-normal text-white shadow-xl backdrop-blur transition-[top,right] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:right-6 lg:right-8 lg:px-3 lg:py-2 lg:text-[0.65rem] lg:font-bold lg:tracking-wide lg:uppercase",
             compact && "top-12 right-3 max-w-[70vw] sm:right-4",
             styles.selectionNotice,
           )}
@@ -216,7 +220,7 @@ export function ConfigurationPreview({
 
       <div
         className={cn(
-          "absolute top-0 right-0 z-20 p-4 sm:p-6 lg:p-8",
+          "absolute top-0 right-0 z-20 p-4 transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:p-6 lg:p-8",
           compact && "p-3 sm:p-4",
         )}
       >
@@ -233,7 +237,7 @@ export function ConfigurationPreview({
                 onClick={() => onViewAngleChange(angle)}
                 aria-pressed={angle === activeAngle}
                 className={cn(
-                  "border px-3 py-2 text-[0.65rem] font-bold tracking-wide uppercase backdrop-blur transition-colors motion-reduce:transition-none",
+                  "border px-3 py-2 text-[0.65rem] font-bold tracking-wide uppercase backdrop-blur transition-[color,background-color,border-color,padding,font-size] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
                   compact && "px-2 py-1.5 text-[0.6rem]",
                   angle === activeAngle
                     ? "border-veridian bg-veridian text-obsidian"
@@ -248,7 +252,7 @@ export function ConfigurationPreview({
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                "border border-white/20 bg-black/30 px-3 py-2 text-[0.65rem] font-bold tracking-wide text-white uppercase backdrop-blur",
+                "border border-white/20 bg-black/30 px-3 py-2 text-[0.65rem] font-bold tracking-wide text-white uppercase backdrop-blur transition-[padding,font-size] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
                 compact && "px-2 py-1.5 text-[0.6rem]",
               )}
             >
