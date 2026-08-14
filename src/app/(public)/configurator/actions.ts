@@ -7,6 +7,7 @@ import {
   saveConfigurationSnapshot,
 } from "@/data/mutations/public-configurations";
 import { PublicRateLimitError } from "@/data/mutations/public-rate-limits";
+import { isTransientDatabaseError } from "@/db/transient";
 import { saveConfigurationSchema } from "@/domain/enquiries/schemas";
 import { enforcePublicActionRateLimits } from "@/lib/public-action-rate-limit";
 
@@ -54,13 +55,21 @@ export async function saveConfigurationAction(
     ]);
     reference = await saveConfigurationSnapshot(parsed.data);
   } catch (error) {
+    if (
+      error instanceof PublicConfigurationError ||
+      error instanceof PublicRateLimitError
+    ) {
+      return { status: "error", message: error.message };
+    }
+
+    // Anything reaching here is unexpected — an unreachable pooler, most often.
+    // Without this the visitor's summary message is the only trace it leaves.
+    console.error("configurator: save action failed", error);
     return {
       status: "error",
-      message:
-        error instanceof PublicConfigurationError ||
-        error instanceof PublicRateLimitError
-          ? error.message
-          : "Configurația nu a putut fi salvată.",
+      message: isTransientDatabaseError(error)
+        ? "Serviciul de salvare este temporar indisponibil."
+        : "Configurația nu a putut fi salvată.",
     };
   }
 

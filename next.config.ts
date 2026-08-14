@@ -26,6 +26,23 @@ function catalogueRemotePatterns(): NonNullable<
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   typedRoutes: true,
+  // The PDF renderer resolves fonts and parses TTFs at runtime; bundling it
+  // breaks those lookups, so let it load from node_modules instead.
+  serverExternalPackages: ["@react-pdf/renderer"],
+  outputFileTracingIncludes: {
+    // Offer documents read brand typefaces and configurator artwork from disk.
+    // Neither is reachable through an import, so trace them explicitly.
+    "/api/oferta": [
+      "./src/lib/pdf/fonts/*.ttf",
+      "./public/images/configurator/**",
+      "./public/images/models/**",
+    ],
+    "/api/oferta/[reference]": [
+      "./src/lib/pdf/fonts/*.ttf",
+      "./public/images/configurator/**",
+      "./public/images/models/**",
+    ],
+  },
   experimental: {
     // Admin catalogue images are limited to 5 MB; multipart overhead needs a
     // little headroom above that application-level limit.

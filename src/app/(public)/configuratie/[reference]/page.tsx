@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, LockKeyhole } from "lucide-react";
+import { CheckCircle2, Download, LockKeyhole } from "lucide-react";
 
 import { ConfigurationShareButton } from "@/components/configurator/configuration-share-button";
 import { buttonVariants } from "@/components/ui/button";
@@ -113,6 +113,13 @@ async function SavedConfigurationContent({ params }: PageProps) {
           >
             Cere ofertă pentru configurație
           </Link>
+          <a
+            href={`/api/oferta/${snapshot.reference}`}
+            className={buttonVariants({ variant: "outline", size: "lg" })}
+          >
+            <Download data-icon="inline-start" aria-hidden="true" />
+            Descarcă oferta PDF
+          </a>
           <ConfigurationShareButton />
         </div>
 

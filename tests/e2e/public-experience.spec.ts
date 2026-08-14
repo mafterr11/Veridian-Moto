@@ -435,3 +435,32 @@ test("saves, shares, and submits a database-backed configuration enquiry", async
   ).toBeVisible();
   await expect(page.getByText(/SOL-[A-F0-9]{8}/)).toBeVisible();
 });
+
+test("downloads the offer for a configuration that was never saved", async ({
+  page,
+}) => {
+  await page.goto("/configurator/rift-700");
+
+  await page.getByRole("button", { name: /Graphite Black/i }).click();
+  await page.getByRole("button", { name: /Continuă la/i }).click();
+  await page.getByRole("button", { name: /Continuă la/i }).click();
+  await page.getByRole("button", { name: /Continuă la Sumar/i }).click();
+  await expect(page.getByText("Configurație validă")).toBeVisible();
+
+  // This path deliberately avoids the configuration snapshot table, so it stays
+  // available even while saving is not.
+  const download = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Descarcă oferta PDF" }).click(),
+  ]).then(([event]) => event);
+
+  expect(download.suggestedFilename()).toBe("VERIDIAN-RIFT-700.pdf");
+
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(chunk as Buffer);
+  const pdf = Buffer.concat(chunks);
+
+  expect(pdf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  expect(pdf.byteLength).toBeGreaterThan(10_000);
+});

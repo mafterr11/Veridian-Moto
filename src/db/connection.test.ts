@@ -10,7 +10,9 @@ describe("serverless database options", () => {
       ssl: "require",
       max: 1,
       idle_timeout: 10,
-      connect_timeout: 10,
+      // Wide enough to outlast a Supabase pooler cold start, which is what
+      // rare public writes keep running into.
+      connect_timeout: 20,
       max_lifetime: 60,
       connection: {
         statement_timeout: 15_000,

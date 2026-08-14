@@ -21,6 +21,23 @@ type RateLimitRule = {
   includeAddress?: boolean;
 };
 
+/**
+ * Applies the same limits, but never lets an unreachable database block the
+ * caller. Use it for read-only endpoints that must keep working during a
+ * database outage; an exceeded limit is still enforced.
+ */
+export async function enforcePublicActionRateLimitsBestEffort(
+  rules: readonly RateLimitRule[],
+) {
+  if (!isDatabaseConfigured() || !env.RATE_LIMIT_SECRET) return;
+
+  try {
+    await enforcePublicActionRateLimits(rules);
+  } catch (error) {
+    if (error instanceof PublicRateLimitError) throw error;
+  }
+}
+
 export async function enforcePublicActionRateLimits(
   rules: readonly RateLimitRule[],
 ) {

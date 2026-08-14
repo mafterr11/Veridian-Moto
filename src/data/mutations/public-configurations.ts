@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
 
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
+import { isTransientDatabaseError, withDatabaseRetry } from "@/db/transient";
 import {
   categories,
   configurationSnapshots,
@@ -38,25 +39,29 @@ async function loadAuthoritativeCatalogue(slug: string) {
   }
 
   const db = getDatabase();
-  const [model] = await db
-    .select({
-      id: motorcycleModels.id,
-      slug: motorcycleModels.slug,
-      name: motorcycleModels.name,
-      modelYear: motorcycleModels.modelYear,
-      basePriceMinor: motorcycleModels.basePriceMinor,
-    })
-    .from(motorcycleModels)
-    .innerJoin(categories, eq(motorcycleModels.categoryId, categories.id))
-    .where(
-      and(
-        eq(motorcycleModels.slug, slug),
-        eq(motorcycleModels.status, "published"),
-        eq(categories.status, "published"),
-        eq(motorcycleModels.configuratorEnabled, true),
-      ),
-    )
-    .limit(1);
+  // First database touch of the save flow, so it absorbs the pooler's cold
+  // start. Reads are idempotent, which makes retrying safe.
+  const [model] = await withDatabaseRetry(() =>
+    db
+      .select({
+        id: motorcycleModels.id,
+        slug: motorcycleModels.slug,
+        name: motorcycleModels.name,
+        modelYear: motorcycleModels.modelYear,
+        basePriceMinor: motorcycleModels.basePriceMinor,
+      })
+      .from(motorcycleModels)
+      .innerJoin(categories, eq(motorcycleModels.categoryId, categories.id))
+      .where(
+        and(
+          eq(motorcycleModels.slug, slug),
+          eq(motorcycleModels.status, "published"),
+          eq(categories.status, "published"),
+          eq(motorcycleModels.configuratorEnabled, true),
+        ),
+      )
+      .limit(1),
+  );
   if (!model) {
     throw new PublicConfigurationError(
       "Modelul nu mai este disponibil în configurator.",
@@ -222,8 +227,13 @@ export async function saveConfigurationSnapshot({
           ? String(error.code)
           : undefined;
       if (code !== "23505" || attempt === 2) {
+        // Only a reference collision is expected here. Anything else is worth
+        // recording, because the visitor only ever sees the summary message.
+        console.error("configurator: snapshot insert failed", error);
         throw new PublicConfigurationError(
-          "Configurația nu a putut fi salvată. Încearcă din nou.",
+          isTransientDatabaseError(error)
+            ? "Serviciul de salvare este temporar indisponibil. Încearcă din nou în câteva momente."
+            : "Configurația nu a putut fi salvată. Încearcă din nou.",
         );
       }
     }

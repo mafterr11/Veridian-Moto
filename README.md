@@ -39,6 +39,7 @@ method and dated sources are recorded in
 - `/modele` and `/modele/[slug]` — catalogue and model details
 - `/configurator` and `/configurator/[slug]` — model selection and configuration
 - `/configuratie/[reference]` — immutable, shareable configuration summary without PII
+- `/api/oferta` and `/api/oferta/[reference]` — branded offer PDF for a live or saved configuration
 - `/accesorii` — published accessory catalogue with category, stock, and sorting filters
 - `/descopera` and `/descopera/[slug]` — editorial experience
 - `/contact` — validated general and configuration-linked enquiry form
@@ -131,6 +132,9 @@ review is documented in [docs/HARDENING.md](docs/HARDENING.md).
 The Phase 10 environment matrix, Supabase/Vercel sequence, release checks,
 monitoring, rollback, and handoff procedure are documented in
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+The downloadable offer document, its two sources, and the embedded font and
+artwork pipeline are documented in [docs/OFFER_PDF.md](docs/OFFER_PDF.md).
 
 Generated product imagery is documented in
 [docs/IMAGE_ASSETS.md](docs/IMAGE_ASSETS.md).

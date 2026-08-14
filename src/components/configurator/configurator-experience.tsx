@@ -20,6 +20,7 @@ import {
   ConfigurationPreview,
   type VisualSelectionSignal,
 } from "@/components/configurator/configuration-preview";
+import { OfferDownloadButton } from "@/components/configurator/offer-download-button";
 import { buttonVariants } from "@/components/ui/button";
 import {
   saveConfigurationAction,
@@ -489,42 +490,55 @@ function ConfigurationSaveForm({
   );
 
   return (
-    <form action={formAction} className="grid min-w-0 gap-2">
-      <input type="hidden" name="modelSlug" value={modelSlug} />
-      <input type="hidden" name="state" value={JSON.stringify(configuration)} />
-      <input type="hidden" name="clientTotalMinor" value={totalMinor} />
-      <button
-        type="submit"
-        disabled={pending}
-        aria-label={
-          pending ? "Se validează pe server" : "Salvează și cere ofertă"
-        }
-        className={buttonVariants({
-          className: "h-11 min-w-0 px-2 text-xs lg:h-12 lg:px-4 lg:text-sm",
-        })}
-      >
-        {pending ? (
-          <>
-            <span className="lg:hidden">Se validează…</span>
-            <span className="hidden lg:inline">Se validează pe server…</span>
-          </>
-        ) : (
-          <>
-            <span className="lg:hidden">Cere ofertă</span>
-            <span className="hidden lg:inline">Salvează și cere ofertă</span>
-          </>
-        )}
-        <ArrowRight data-icon="inline-end" aria-hidden="true" />
-      </button>
+    <div className="grid min-w-0 gap-2">
+      <form action={formAction} className="grid min-w-0 gap-2">
+        <input type="hidden" name="modelSlug" value={modelSlug} />
+        <input
+          type="hidden"
+          name="state"
+          value={JSON.stringify(configuration)}
+        />
+        <input type="hidden" name="clientTotalMinor" value={totalMinor} />
+        <button
+          type="submit"
+          disabled={pending}
+          aria-label={
+            pending ? "Se validează pe server" : "Salvează și cere ofertă"
+          }
+          className={buttonVariants({
+            className: "h-11 min-w-0 px-2 text-xs lg:h-12 lg:px-4 lg:text-sm",
+          })}
+        >
+          {pending ? (
+            <>
+              <span className="lg:hidden">Se validează…</span>
+              <span className="hidden lg:inline">Se validează pe server…</span>
+            </>
+          ) : (
+            <>
+              <span className="lg:hidden">Cere ofertă</span>
+              <span className="hidden lg:inline">Salvează și cere ofertă</span>
+            </>
+          )}
+          <ArrowRight data-icon="inline-end" aria-hidden="true" />
+        </button>
+        <span className="sr-only">
+          {catalogue.modelName} va fi recalculat înainte de salvare.
+        </span>
+      </form>
+
+      <OfferDownloadButton
+        modelSlug={modelSlug}
+        configuration={configuration}
+      />
+
       {state.status === "error" && (
         <p className="text-sm text-red-700" role="alert">
-          {state.message}
+          {state.message} Configurația rămâne pe ecran — poți descărca oferta
+          PDF sau ne poți scrie direct.
         </p>
       )}
-      <span className="sr-only">
-        {catalogue.modelName} va fi recalculat înainte de salvare.
-      </span>
-    </form>
+    </div>
   );
 }
 

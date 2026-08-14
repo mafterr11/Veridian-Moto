@@ -14,7 +14,10 @@ export const serverlessDatabaseOptions = {
   // prevents every warm instance from reserving a five-connection sub-pool.
   max: 1,
   idle_timeout: 10,
-  connect_timeout: 10,
+  // Supabase's pooler stops a tenant's pool while it is idle and restarts it on
+  // the next connection. Ten seconds was not enough headroom for that cold
+  // start, so rare public writes failed with CONNECT_TIMEOUT.
+  connect_timeout: 20,
   max_lifetime: 60,
   keep_alive: 30,
   connection: {

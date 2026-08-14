@@ -222,6 +222,29 @@ exact production deployment:
 6. Supabase database logs show neither exhausted connections nor a statement
    waiting on a lock beyond the configured 15-second timeout.
 
+### Pooler cold starts on public writes
+
+Supavisor stops a tenant's connection pool while it is idle and starts it again
+on the next connection. Supabase logs show the pattern directly:
+
+```
+Pool ... shutting down gracefully        ← no active connection
+Starting pool(s) for Supavisor.id(...)   ← cold start on the next request
+```
+
+Public reads survive this because `unstable_cache` serves the previous value and
+revalidates in the background. Public writes have nothing to fall back on, so a
+cold start that outlasts `connect_timeout` surfaces to the visitor as a failed
+save while every page still looks healthy. The symptom in Vercel runtime errors
+is `write CONNECT_TIMEOUT ...pooler.supabase.com:6543`.
+
+Two mitigations are in place: `connect_timeout` in `src/db/connection.ts` allows
+enough headroom for the restart, and `withDatabaseRetry` in `src/db/transient.ts`
+retries idempotent connection failures once — by then the failed attempt has
+already woken the pool. Rare public actions are the ones that keep paying this
+cost, so check `public_action_rate_limits` when diagnosing: an empty table means
+no public write has ever reached the database.
+
 Do not delete and recreate the Vercel project for an application or database
 failure. Correct the source/environment, create a fresh deployment, and run the
 smoke check. Recreating the project changes domains and configuration but does not
