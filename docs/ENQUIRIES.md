@@ -39,13 +39,29 @@ challenge service.
 1. Validate the Server Action payload.
 2. Resolve the optional configuration reference inside a database transaction.
 3. reject a recent duplicate and insert the enquiry.
-4. Notify the configured address through Resend after the commit.
+4. Render the offer document when a configuration is attached, then notify the
+   configured address through Resend after the commit.
 5. Return a short display reference such as `SOL-12AB34CD`.
 
 The Resend request uses the enquiry UUID as its idempotency key, escapes all HTML,
-sets the visitor as `reply_to`, and times out after eight seconds. A provider failure
-does not remove or duplicate the database record and does not turn a successfully
-recorded enquiry into an error for the visitor.
+and sets the visitor as `reply_to`. A provider failure does not remove or duplicate
+the database record and does not turn a successfully recorded enquiry into an error
+for the visitor.
+
+### The attached offer
+
+An enquiry carrying a configuration reference arrives with the offer PDF already
+attached, so VERIDIAN can forward it to the customer without opening the Atelier.
+See [docs/OFFER_PDF.md](OFFER_PDF.md) for the document itself.
+
+Rendering happens after the commit and is failure-tolerant: if the configuration
+cannot be read or the document cannot be rendered, the notification is still sent,
+carries an explicit warning, and falls back to the `/api/oferta/[reference]` link.
+That link is also always present, because it outlives an attachment that has been
+deleted from an inbox. The request timeout widens from eight to twenty seconds when
+an attachment is present.
+
+The same download sits next to each configuration enquiry in `/atelier/solicitari`.
 
 Set all three values to enable notifications:
 

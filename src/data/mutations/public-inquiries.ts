@@ -5,7 +5,11 @@ import { and, eq, gte } from "drizzle-orm";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import { configurationSnapshots, inquiries } from "@/db/schema";
 import { PRIVACY_POLICY_VERSION } from "@/domain/enquiries/schemas";
-import { sendEnquiryNotification } from "@/lib/email/enquiry-notification";
+import {
+  isEnquiryNotificationConfigured,
+  sendEnquiryNotification,
+} from "@/lib/email/enquiry-notification";
+import { renderOfferAttachment } from "@/lib/pdf/offer-attachment";
 
 export class PublicInquiryError extends Error {
   constructor(message: string) {
@@ -88,10 +92,19 @@ export async function createPublicInquiry(input: {
   });
 
   try {
+    // Attaching the offer here is what lets VERIDIAN forward it to the customer
+    // without opening the Atelier first. It renders to `undefined` on failure,
+    // and the notification then carries the download link instead.
+    const offer =
+      input.configurationReference && isEnquiryNotificationConfigured()
+        ? await renderOfferAttachment(input.configurationReference)
+        : undefined;
+
     await sendEnquiryNotification({
+      ...input,
       id: result.id,
       type: result.type,
-      ...input,
+      offer,
     });
   } catch {
     // The database inbox is authoritative. A provider/network failure must not

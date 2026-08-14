@@ -82,9 +82,16 @@ read-only document. An exceeded limit is still enforced and answered with 429.
 
 ## Where it appears
 
+The download serves the visitor, who wants to take their configuration away. The
+attachment serves VERIDIAN, who wants to forward an offer later.
+
 - The configurator's summary step, next to "Salvează și cere ofertă". It stays
   available when saving fails, which is what the failure message points to.
 - `/configuratie/[reference]`, next to the enquiry link.
+- Attached to the Resend notification for every enquiry that carries a
+  configuration, alongside a permanent link to the same document. See
+  [docs/ENQUIRIES.md](ENQUIRIES.md).
+- `/atelier/solicitari`, next to each configuration enquiry.
 
 ## Related failure mode
 

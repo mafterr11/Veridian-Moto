@@ -1,6 +1,7 @@
 import "server-only";
 
 import { env } from "@/env";
+import type { OfferAttachment } from "@/lib/pdf/offer-attachment";
 
 type EnquiryEmail = {
   id: string;
@@ -12,7 +13,17 @@ type EnquiryEmail = {
   message: string;
   preferredContactMethod: "email" | "phone";
   configurationReference?: string;
+  /** The configured motorcycle as a ready-to-forward offer document. */
+  offer?: OfferAttachment;
 };
+
+/**
+ * Rendering the offer roughly doubles the request body, and a provider that is
+ * slow to accept it should not hold the visitor's form open. Attachments get a
+ * wider window than a plain notification.
+ */
+const PLAIN_TIMEOUT_MS = 8_000;
+const ATTACHMENT_TIMEOUT_MS = 20_000;
 
 function escapeHtml(value: string) {
   return value
@@ -23,14 +34,35 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#039;");
 }
 
+function offerUrl(reference: string) {
+  return new URL(`/api/oferta/${reference}`, env.NEXT_PUBLIC_APP_URL).href;
+}
+
+/**
+ * Whether a notification can actually be delivered.
+ *
+ * Callers check this before doing work that only the notification consumes —
+ * rendering the offer attachment above all — so an unconfigured provider costs
+ * nothing per enquiry.
+ */
+export function isEnquiryNotificationConfigured() {
+  return Boolean(
+    env.RESEND_API_KEY &&
+    env.RESEND_FROM_EMAIL &&
+    env.ENQUIRY_NOTIFICATION_EMAIL,
+  );
+}
+
 export async function sendEnquiryNotification(input: EnquiryEmail) {
-  if (
-    !env.RESEND_API_KEY ||
-    !env.RESEND_FROM_EMAIL ||
-    !env.ENQUIRY_NOTIFICATION_EMAIL
-  ) {
+  if (!isEnquiryNotificationConfigured()) {
     return { sent: false, reason: "not-configured" as const };
   }
+
+  // The link stays useful after the attachment is gone from an inbox, and it is
+  // the only offer pointer when rendering failed.
+  const offerLink = input.configurationReference
+    ? offerUrl(input.configurationReference)
+    : undefined;
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -51,6 +83,10 @@ export async function sendEnquiryNotification(input: EnquiryEmail) {
         `Telefon: ${input.phone ?? "—"}`,
         `Contact preferat: ${input.preferredContactMethod}`,
         `Configurație: ${input.configurationReference ?? "—"}`,
+        ...(offerLink ? [`Ofertă PDF: ${offerLink}`] : []),
+        ...(input.configurationReference && !input.offer
+          ? ["Atenție: oferta PDF nu a putut fi atașată. Folosește linkul."]
+          : []),
         "",
         input.message,
       ].join("\n"),
@@ -61,9 +97,29 @@ export async function sendEnquiryNotification(input: EnquiryEmail) {
         <p><strong>Telefon:</strong> ${escapeHtml(input.phone ?? "—")}</p>
         <p><strong>Contact preferat:</strong> ${escapeHtml(input.preferredContactMethod)}</p>
         <p><strong>Configurație:</strong> ${escapeHtml(input.configurationReference ?? "—")}</p>
+        ${
+          offerLink
+            ? `<p><strong>Ofertă PDF:</strong> <a href="${escapeHtml(offerLink)}">${escapeHtml(
+                input.offer?.filename ?? "descarcă oferta",
+              )}</a>${
+                input.offer
+                  ? " — atașată acestui mesaj."
+                  : " — atașamentul nu a putut fi generat, folosește linkul."
+              }</p>`
+            : ""
+        }
         <hr><p>${escapeHtml(input.message).replaceAll("\n", "<br>")}</p>`,
+      ...(input.offer
+        ? {
+            attachments: [
+              { filename: input.offer.filename, content: input.offer.content },
+            ],
+          }
+        : {}),
     }),
-    signal: AbortSignal.timeout(8_000),
+    signal: AbortSignal.timeout(
+      input.offer ? ATTACHMENT_TIMEOUT_MS : PLAIN_TIMEOUT_MS,
+    ),
   });
 
   if (!response.ok) {

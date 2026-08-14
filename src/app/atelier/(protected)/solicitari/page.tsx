@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Mail, MessageSquareText, Phone } from "lucide-react";
+import { Download, Mail, MessageSquareText, Phone } from "lucide-react";
 
 import { updateInquiryAction } from "@/app/atelier/(protected)/solicitari/actions";
 import { AdminActionForm } from "@/components/admin/action-form";
@@ -178,14 +178,23 @@ async function InquiryWorkspace({
                             {formatMinorPrice(row.totalPriceMinor ?? 0)}
                           </span>
                         </div>
-                        <AdminDocumentLink
-                          href={`/configuratie/${row.configurationReference}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-veridian mt-4 inline-flex text-sm font-bold"
-                        >
-                          Deschide rezumatul public
-                        </AdminDocumentLink>
+                        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+                          <AdminDocumentLink
+                            href={`/configuratie/${row.configurationReference}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-veridian inline-flex text-sm font-bold"
+                          >
+                            Deschide rezumatul public
+                          </AdminDocumentLink>
+                          <AdminDocumentLink
+                            href={`/api/oferta/${row.configurationReference}`}
+                            className="text-veridian inline-flex items-center gap-1.5 text-sm font-bold"
+                          >
+                            <Download className="size-4" aria-hidden="true" />
+                            Descarcă oferta PDF
+                          </AdminDocumentLink>
+                        </div>
                       </div>
                     )}
                   </div>

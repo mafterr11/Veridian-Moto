@@ -2,14 +2,20 @@
 //
 // Exercises the offer pipeline against the checked-in demo catalogue, which is
 // also the fallback the routes use when the database is unreachable.
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const configurationMocks = vi.hoisted(() => ({
+  getPublicConfiguration: vi.fn(),
+}));
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({
   unstable_cache: vi.fn((callback: unknown) => callback),
 }));
+vi.mock("@/data/queries/public-configurations", () => configurationMocks);
 
 import {
+  buildOfferFromReference,
   buildOfferFromState,
   OfferUnavailableError,
 } from "@/data/queries/public-offers";
@@ -112,5 +118,85 @@ describe("buildOfferFromState", () => {
     await expect(
       buildOfferFromState({ modelSlug: "rift-700", state: invalid, issuedAt }),
     ).rejects.toBeInstanceOf(OfferUnavailableError);
+  });
+}, 30_000);
+
+const snapshot = {
+  reference: "K7M2QPX9RT4B",
+  modelIdentity: { slug: "rift-700", name: "Rift 700", modelYear: 2026 },
+  basePriceMinor: 3_899_000,
+  totalPriceMinor: 4_226_000,
+  currency: "RON",
+  createdAt: issuedAt,
+  selectedChoices: [
+    {
+      groupKey: "finish",
+      groupName: "Culoare și finisaj",
+      choiceCode: "color-graphite",
+      choiceName: "Graphite Black",
+      priceDeltaMinor: 59_000,
+      isCurrentlyAvailable: true,
+    },
+    {
+      groupKey: "touring",
+      groupName: "Echipare și bagaje",
+      choiceCode: "touring-pack",
+      choiceName: "Pachet Touring",
+      priceDeltaMinor: 169_000,
+      isCurrentlyAvailable: true,
+    },
+  ],
+};
+
+describe("buildOfferFromReference", () => {
+  beforeEach(() => {
+    configurationMocks.getPublicConfiguration.mockReset();
+    configurationMocks.getPublicConfiguration.mockResolvedValue(snapshot);
+  });
+
+  it("keeps the snapshot's prices rather than repricing from the catalogue", async () => {
+    configurationMocks.getPublicConfiguration.mockResolvedValue({
+      ...snapshot,
+      // A price the current catalogue no longer charges.
+      basePriceMinor: 3_500_000,
+      totalPriceMinor: 3_728_000,
+    });
+
+    const payload = await buildOfferFromReference("K7M2QPX9RT4B");
+
+    expect(payload?.offer.basePriceMinor).toBe(3_500_000);
+    expect(payload?.offer.totalMinor).toBe(3_728_000);
+    expect(payload?.offer.reference).toBe("K7M2QPX9RT4B");
+    expect(payload?.fileName).toBe("VERIDIAN-RIFT-700-K7M2QPX9RT4B.pdf");
+  });
+
+  it("re-renders the artwork by mapping stored codes onto the catalogue", async () => {
+    const payload = await buildOfferFromReference("K7M2QPX9RT4B");
+
+    // The snapshot stores `groupKey:choiceCode`, never the catalogue's own
+    // identifiers, so the preview depends on that mapping succeeding.
+    expect(payload?.previewImage).toMatch(/^data:image\/jpeg;base64,/);
+  });
+
+  it("marks choices the published catalogue has since dropped", async () => {
+    configurationMocks.getPublicConfiguration.mockResolvedValue({
+      ...snapshot,
+      selectedChoices: [
+        { ...snapshot.selectedChoices[0], isCurrentlyAvailable: false },
+      ],
+    });
+
+    const payload = await buildOfferFromReference("K7M2QPX9RT4B");
+
+    expect(payload?.offer.hasUnavailableSelections).toBe(true);
+    expect(payload?.offer.groups[0].items[0].unavailable).toBe(true);
+  });
+
+  it("returns nothing for a reference that does not exist", async () => {
+    configurationMocks.getPublicConfiguration.mockResolvedValue(undefined);
+
+    await expect(
+      buildOfferFromReference("K7M2QPX9RT4B"),
+    ).resolves.toBeUndefined();
   });
 }, 30_000);
