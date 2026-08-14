@@ -333,6 +333,34 @@ test("keeps the live preview visible while configuring on mobile", async ({
   ).toBeInViewport();
 });
 
+test("keeps the mobile preview stable at the compact threshold", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/configurator/terran-900-rally");
+
+  const preview = page.locator("[data-configurator-preview]");
+  const observedStates = await preview.evaluate(async (element) => {
+    const states = [element.getAttribute("data-preview-state")];
+    const observer = new MutationObserver(() => {
+      states.push(element.getAttribute("data-preview-state"));
+    });
+
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ["data-preview-state"],
+    });
+    window.scrollTo({ top: 49 });
+    await new Promise((resolve) => window.setTimeout(resolve, 900));
+    observer.disconnect();
+
+    return states;
+  });
+
+  expect(observedStates).toEqual(["expanded", "compact"]);
+  await expect(preview).toHaveAttribute("data-preview-state", "compact");
+});
+
 test("offers a working configurator for another initial model", async ({
   page,
 }) => {

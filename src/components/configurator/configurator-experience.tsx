@@ -172,7 +172,7 @@ export function ConfiguratorExperience({
   }
 
   return (
-    <main className="bg-porcelain text-obsidian">
+    <main className="bg-porcelain text-obsidian [overflow-anchor:none]">
       <div className="lg:grid lg:min-h-[calc(100svh-5rem)] lg:grid-cols-[minmax(0,1.45fr)_minmax(25rem,0.9fr)]">
         <section
           data-configurator-preview
